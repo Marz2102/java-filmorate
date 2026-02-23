@@ -102,13 +102,13 @@ class FilmorateApplicationTests {
 	}
 
 	@Test
-	void PostEmptyRequestUser() {
+	void postEmptyRequestUser() {
 		ResponseEntity<User> response = restTemplate.postForEntity(BASE_URL + "/user", null, User.class);
 		assertEquals(415, response.getStatusCode().value());
 	}
 
 	@Test
-	void PostEmptyRequestFilm() {
+	void postEmptyRequestFilm() {
 		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/film", null, Film.class);
 		assertEquals(415, response.getStatusCode().value());
 	}
