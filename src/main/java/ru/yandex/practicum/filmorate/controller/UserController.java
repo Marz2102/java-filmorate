@@ -78,6 +78,11 @@ public class UserController {
             throw new ValidationException("Запрос некорректен");
         }
 
+        if (user.getId() == null) {
+            log.warn("Отсутствует id");
+            throw new ValidationException("Укажите id для обновления пользователя");
+        }
+
         if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Проблема с полем 'Дата рождения'");
             throw new ValidationException("День рождения не может быть позже сегодняшней даты");

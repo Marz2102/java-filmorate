@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -70,10 +69,16 @@ public class FilmController {
     }
 
     private void validateRequestBody(Film film) {
-        if (film == null || film.getId() == null) {
+        if (film == null) {
             log.warn("Пустой запрос");
             throw new ValidationException("Запрос некорректен");
         }
+
+        if (film.getId() == null) {
+            log.warn("Отсутствует id");
+            throw new ValidationException("Укажите id для обновления фильма");
+        }
+
         if (film.getDescription() != null && film.getDescription().length() > 200) {
             log.warn("Проблема с полем 'Описание'");
             throw new ValidationException("Описание фильма не может быть больше 200 символов");

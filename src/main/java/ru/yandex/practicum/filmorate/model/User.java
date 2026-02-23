@@ -22,4 +22,9 @@ public class User {
 
     @PastOrPresent(message = "Дата рождения не может быть позже сегодняшнего дня")
     private LocalDate birthday;
+
+    public User(String email, String login) {
+        this.email = email;
+        this.login = login;
+    }
 }
