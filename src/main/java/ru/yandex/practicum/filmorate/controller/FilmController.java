@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("api/film")
+@RequestMapping("/films")
 public class FilmController {
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
     private final Map<Long, Film> films = new HashMap<>();

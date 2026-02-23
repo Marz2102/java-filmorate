@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("api/user")
+@RequestMapping("/users")
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
