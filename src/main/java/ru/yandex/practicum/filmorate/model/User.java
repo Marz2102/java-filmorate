@@ -1,30 +1,25 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
+@AllArgsConstructor
 public class User {
     private Long id;
 
-    @NotNull(message = "Введите почту в корректном формате")
     @Email(message = "Введите почту в корректном формате")
-    private final String email;
+    private String email;
 
-    @NotNull(message = "Укажите логин из одного слова и без пробелов")
     @NotEmpty(message = "Логин не может быть пустым")
     @Pattern(regexp = "\\S+", message = "Логин должен состоять из одного слова, без пробелов")
-    private final String login;
+    private String login;
 
     private String name;
 
     @PastOrPresent(message = "Дата рождения не может быть позже сегодняшнего дня")
     private LocalDate birthday;
-
-    public User(String email, String login) {
-        this.email = email;
-        this.login = login;
-    }
 }

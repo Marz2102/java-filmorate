@@ -37,7 +37,7 @@ public class UserController {
         log.debug("Сгенерирован новый id - {}", id);
         user.setId(id);
 
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());
             log.debug("Имя пусто, используется логин - {}", user.getName());
         }
@@ -49,11 +49,16 @@ public class UserController {
     }
 
     @PutMapping
-    public User updateUser(@RequestBody User user) {
+    public User updateUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на обновление данных пользователя");
 
         validateRequestBody(user);
         log.trace("Валидация запроса прошла успешно");
+
+        if (users.get(user.getId()) == null) {
+            log.info("Не найдено пользователей с указанным id - {}", user.getId());
+            throw new ValidationException("Не найдено записей для обновления");
+        }
 
         User oldUser = users.get(user.getId());
 
@@ -65,6 +70,16 @@ public class UserController {
         if (user.getBirthday() != null) {
             oldUser.setBirthday(user.getBirthday());
             log.debug("Обновили дату рождения пользователя - {}", oldUser.getBirthday());
+        }
+
+        if (user.getEmail() != null) {
+            oldUser.setEmail(user.getEmail());
+            log.debug("Обновили почту пользователя - {}", oldUser.getEmail());
+        }
+
+        if (user.getLogin() != null) {
+            oldUser.setLogin(user.getLogin());
+            log.debug("Обновили логин пользователя - {}", oldUser.getLogin());
         }
 
         log.info("Данные пользователя успешно обновлены");
@@ -81,11 +96,6 @@ public class UserController {
         if (user.getId() == null) {
             log.warn("Отсутствует id");
             throw new ValidationException("Укажите id для обновления пользователя");
-        }
-
-        if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
-            log.warn("Проблема с полем 'Дата рождения'");
-            throw new ValidationException("День рождения не может быть позже сегодняшней даты");
         }
     }
 

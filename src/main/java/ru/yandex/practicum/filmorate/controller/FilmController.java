@@ -44,13 +44,13 @@ public class FilmController {
         film.setId(id);
 
         films.put(film.getId(), film);
-        log.info("Успешно добавлен новый пользователь");
+        log.info("Успешно добавлен новый фильм");
 
         return film;
     }
 
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на обновление данных фильма");
 
         validateRequestBody(film);
@@ -61,6 +61,21 @@ public class FilmController {
         if (film.getDescription() != null) {
             oldFilm.setDescription(film.getDescription());
             log.debug("Обновили описание фильма - {}", oldFilm.getDescription());
+        }
+
+        if (film.getName() != null) {
+            oldFilm.setName(film.getName());
+            log.debug("Обновили название фильма - {}", oldFilm.getName());
+        }
+
+        if (film.getReleaseDate() != null) {
+            oldFilm.setReleaseDate(film.getReleaseDate());
+            log.debug("Обновили дату релиза фильма - {}", oldFilm.getReleaseDate());
+        }
+
+        if (film.getDuration() > 0) {
+            oldFilm.setDuration(film.getDuration());
+            log.debug("Обновили продолжительность фильма - {}", oldFilm.getDuration());
         }
 
         log.info("Данные фильма успешно обновлены");
@@ -77,11 +92,6 @@ public class FilmController {
         if (film.getId() == null) {
             log.warn("Отсутствует id");
             throw new ValidationException("Укажите id для обновления фильма");
-        }
-
-        if (film.getDescription() != null && film.getDescription().length() > 200) {
-            log.warn("Проблема с полем 'Описание'");
-            throw new ValidationException("Описание фильма не может быть больше 200 символов");
         }
     }
 
