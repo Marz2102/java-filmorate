@@ -2,9 +2,11 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.NotFoundResponse;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
+    public ResponseEntity<?> updateUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на обновление данных пользователя");
 
         validateRequestBody(user);
@@ -58,8 +60,9 @@ public class UserController {
         User oldUser = users.get(user.getId());
 
         if (oldUser == null) {
-            log.info("Не найдено пользователей с указанным id - {}", user.getId());
-            return ResponseEntity.notFound().build();
+            log.info("Не найдено фильмов с указанным id - {}", user.getId());
+            NotFoundResponse error = new NotFoundResponse(HttpStatusCode.valueOf(404), "Не найдено пользователей с указанным id", System.currentTimeMillis());
+            return ResponseEntity.status(404).body(error);
         }
 
         if (user.getName() != null && !user.getName().isEmpty()) {

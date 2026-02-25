@@ -2,9 +2,11 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.NotFoundResponse;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
@@ -51,7 +53,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
+    public ResponseEntity<?> updateFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на обновление данных фильма");
 
         validateRequestBody(film);
@@ -61,7 +63,8 @@ public class FilmController {
 
         if (oldFilm == null) {
             log.info("Не найдено фильмов с указанным id - {}", film.getId());
-            return ResponseEntity.notFound().build();
+            NotFoundResponse error = new NotFoundResponse(HttpStatusCode.valueOf(404), "Не найдено фильмов с указанным id", System.currentTimeMillis());
+            return ResponseEntity.status(404).body(error);
         }
 
         if (film.getDescription() != null) {
