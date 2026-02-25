@@ -112,7 +112,7 @@ class FilmorateApplicationTests {
 		Film film = new Film(1L, "Аватар", "", LocalDate.of(1895, 2, 27), 150);
 
 		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
-		assertEquals(500, response.getStatusCode().value(), "Должна вернуться ошибка 500");
+		assertEquals(400, response.getStatusCode().value(), "Должна вернуться ошибка 400");
 
 		log.info("Тест прошел успешно");
 	}
@@ -129,8 +129,8 @@ class FilmorateApplicationTests {
 	}
 
 	@Test
-	void postEmptyRequestUser() {
-		log.info("Тест пустого POST запроса фильма");
+	void postNullRequestUser() {
+		log.info("Тест POST запроса фильма с отсутствующим телом");
 		ResponseEntity<User> response = restTemplate.postForEntity(BASE_URL + "/users", null, User.class);
 		assertEquals(415, response.getStatusCode().value(), "Должна вернуться ошибка 415");
 
@@ -138,8 +138,8 @@ class FilmorateApplicationTests {
 	}
 
 	@Test
-	void postEmptyRequestFilm() {
-		log.info("Тест пустого POST запроса пользователя");
+	void postNullRequestFilm() {
+		log.info("Тест POST запроса пользователя с отсутствующим телом");
 		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", null, Film.class);
 		assertEquals(415, response.getStatusCode().value(), "Должна вернуться ошибка 415");
 
@@ -193,7 +193,7 @@ class FilmorateApplicationTests {
 		Film newFilm = new Film(2L, "Аватар2", "", LocalDate.of(2009, 1, 1), 150);
 		ResponseEntity<Film> response = restTemplate.exchange(BASE_URL + "/films", HttpMethod.PUT, new HttpEntity<>(newFilm), Film.class);
 
-		assertEquals(500, response.getStatusCode().value(), "Должна вернуться ошибка 500");
+		assertEquals(404, response.getStatusCode().value(), "Должна вернуться ошибка 404");
 
 		log.info("Тест прошел успешно");
 	}
@@ -205,9 +205,9 @@ class FilmorateApplicationTests {
 		restTemplate.postForEntity(BASE_URL + "/users", user, User.class);
 
 		User newUser = new User(10L, "2aaa@bbb.com", "ZYX", "abc", LocalDate.of(2000, 1, 1));
-		ResponseEntity<User> response = restTemplate.exchange(BASE_URL + "/films", HttpMethod.PUT, new HttpEntity<>(newUser), User.class);
+		ResponseEntity<User> response = restTemplate.exchange(BASE_URL + "/users", HttpMethod.PUT, new HttpEntity<>(newUser), User.class);
 
-		assertEquals(500, response.getStatusCode().value(), "Должна вернуться ошибка 500");
+		assertEquals(404, response.getStatusCode().value(), "Должна вернуться ошибка 404");
 
 		log.info("Тест прошел успешно");
 	}

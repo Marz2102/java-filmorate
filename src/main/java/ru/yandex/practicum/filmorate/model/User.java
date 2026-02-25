@@ -11,6 +11,7 @@ import java.time.LocalDate;
 public class User {
     private Long id;
 
+    @NotBlank
     @Email(message = "Введите почту в корректном формате")
     private String email;
 

@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,6 +21,6 @@ public class Film {
 
     private LocalDate releaseDate;
 
-    @PositiveOrZero(message = "Продолжительность фильма не может быть отрицательной")
+    @Positive(message = "Продолжительность фильма должна быть положительной")
     private int duration;
 }

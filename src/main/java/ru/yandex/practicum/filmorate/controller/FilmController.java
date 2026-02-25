@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -20,13 +21,13 @@ public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
 
     @GetMapping
-    public List<Film> getFilms() {
+    public ResponseEntity<List<Film>> getFilms() {
         log.info("Вызван эндпоинт на получение всех фильмов");
-        return new ArrayList<>(films.values());
+        return ResponseEntity.ok(new ArrayList<>(films.values()));
     }
 
     @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film) {
+    public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на создание нового фильма");
 
         if (film == null) {
@@ -34,7 +35,7 @@ public class FilmController {
             throw new ValidationException("Запрос некорректен");
         }
 
-        if (film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
             log.warn("Проблема с полем 'Дата релиза'");
             throw new ValidationException("Дата релиза не может быть раньше " + CINEMA_BIRTHDAY);
         }
@@ -44,19 +45,24 @@ public class FilmController {
         film.setId(id);
 
         films.put(film.getId(), film);
-        log.info("Успешно добавлен новый фильм");
+        log.info("Успешно добавлен новый фильм с id = {}", film.getId());
 
-        return film;
+        return ResponseEntity.ok(film);
     }
 
     @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) {
+    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на обновление данных фильма");
 
         validateRequestBody(film);
         log.trace("Валидация запроса прошла успешно");
 
         Film oldFilm = films.get(film.getId());
+
+        if (oldFilm == null) {
+            log.info("Не найдено фильмов с указанным id - {}", film.getId());
+            return ResponseEntity.notFound().build();
+        }
 
         if (film.getDescription() != null) {
             oldFilm.setDescription(film.getDescription());
@@ -78,20 +84,20 @@ public class FilmController {
             log.debug("Обновили продолжительность фильма - {}", oldFilm.getDuration());
         }
 
-        log.info("Данные фильма успешно обновлены");
+        log.info("Данные фильма с id = {} успешно обновлены", film.getId());
 
-        return oldFilm;
+        return ResponseEntity.ok(oldFilm);
     }
 
     private void validateRequestBody(Film film) {
-        if (film == null) {
-            log.warn("Пустой запрос");
-            throw new ValidationException("Запрос некорректен");
-        }
-
         if (film.getId() == null) {
             log.warn("Отсутствует id");
             throw new ValidationException("Укажите id для обновления фильма");
+        }
+
+        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
+            log.warn("Проблема с полем 'Дата релиза'");
+            throw new ValidationException("Дата релиза не может быть раньше " + CINEMA_BIRTHDAY);
         }
     }
 

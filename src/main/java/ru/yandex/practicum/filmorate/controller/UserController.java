@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -18,13 +19,13 @@ public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
     @GetMapping
-    public List<User> getUsers() {
+    public ResponseEntity<List<User>> getUsers() {
         log.info("Вызван эндпоинт на получение всех пользователей");
-        return new ArrayList<>(users.values());
+        return ResponseEntity.ok(new ArrayList<>(users.values()));
     }
 
     @PostMapping
-    public User addUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на создание нового пользователя");
 
         if (user == null) {
@@ -42,26 +43,26 @@ public class UserController {
         }
 
         users.put(user.getId(), user);
-        log.info("Успешно добавлен новый пользователь");
+        log.info("Успешно добавлен новый пользователь с id = {}", user.getId());
 
-        return user;
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на обновление данных пользователя");
 
         validateRequestBody(user);
         log.trace("Валидация запроса прошла успешно");
 
-        if (users.get(user.getId()) == null) {
-            log.info("Не найдено пользователей с указанным id - {}", user.getId());
-            throw new ValidationException("Не найдено записей для обновления");
-        }
-
         User oldUser = users.get(user.getId());
 
-        if (user.getName() != null) {
+        if (oldUser == null) {
+            log.info("Не найдено пользователей с указанным id - {}", user.getId());
+            return ResponseEntity.notFound().build();
+        }
+
+        if (user.getName() != null && !user.getName().isEmpty()) {
             oldUser.setName(user.getName());
             log.debug("Обновили имя пользователя - {}", oldUser.getName());
         }
@@ -81,17 +82,12 @@ public class UserController {
             log.debug("Обновили логин пользователя - {}", oldUser.getLogin());
         }
 
-        log.info("Данные пользователя успешно обновлены");
+        log.info("Данные пользователя с id = {} успешно обновлены", user.getId());
 
-        return oldUser;
+        return ResponseEntity.ok(oldUser);
     }
 
     private void validateRequestBody(User user) {
-        if (user == null) {
-            log.warn("Пустой запрос");
-            throw new ValidationException("Запрос некорректен");
-        }
-
         if (user.getId() == null) {
             log.warn("Отсутствует id");
             throw new ValidationException("Укажите id для обновления пользователя");
