@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.controller;
+package ru.yandex.practicum.filmorate.controllers;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -88,13 +88,6 @@ public class UserController {
         log.info("Данные пользователя с id = {} успешно обновлены", user.getId());
 
         return ResponseEntity.ok(oldUser);
-    }
-
-    private void validateRequestBody(User user) {
-        if (user.getId() == null) {
-            log.warn("Отсутствует id");
-            throw new ValidationException("Укажите id для обновления пользователя");
-        }
     }
 
     private Long generateNextId() {
