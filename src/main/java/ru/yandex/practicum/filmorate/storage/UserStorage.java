@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface UserStorage {
-    final Map<Long, User> users = new HashMap<>();
+    Map<Long, User> users = new HashMap<>();
 
     Optional<User> findById(Long id);
     List<User> getUsers();

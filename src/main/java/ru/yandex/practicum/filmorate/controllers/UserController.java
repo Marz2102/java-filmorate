@@ -2,103 +2,69 @@ package ru.yandex.practicum.filmorate.controllers;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
-import ru.yandex.practicum.filmorate.NotFoundResponse;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.services.UserService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     public ResponseEntity<List<User>> getUsers() {
         log.info("Вызван эндпоинт на получение всех пользователей");
-        return ResponseEntity.ok(new ArrayList<>(users.values()));
+        return ResponseEntity.ok(userService.getUsers());
     }
 
     @PostMapping
     public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на создание нового пользователя");
-
-        if (user == null) {
-            log.warn("Пустой запрос");
-            throw new ValidationException("Запрос некорректен");
-        }
-
-        Long id = generateNextId();
-        log.debug("Сгенерирован новый id - {}", id);
-        user.setId(id);
-
-        if (user.getName() == null || user.getName().isEmpty()) {
-            user.setName(user.getLogin());
-            log.debug("Имя пусто, используется логин - {}", user.getName());
-        }
-
-        users.put(user.getId(), user);
-        log.info("Успешно добавлен новый пользователь с id = {}", user.getId());
-
-        return ResponseEntity.ok(user);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(userService.addUser(user));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateUser(@Valid @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
         log.info("Вызван эндпоинт на обновление данных пользователя");
-
-        validateRequestBody(user);
-        log.trace("Валидация запроса прошла успешно");
-
-        User oldUser = users.get(user.getId());
-
-        if (oldUser == null) {
-            log.info("Не найдено фильмов с указанным id - {}", user.getId());
-            NotFoundResponse error = new NotFoundResponse(HttpStatusCode.valueOf(404), "Не найдено пользователей с указанным id", System.currentTimeMillis());
-            return ResponseEntity.status(404).body(error);
-        }
-
-        if (user.getName() != null && !user.getName().isEmpty()) {
-            oldUser.setName(user.getName());
-            log.debug("Обновили имя пользователя - {}", oldUser.getName());
-        }
-
-        if (user.getBirthday() != null) {
-            oldUser.setBirthday(user.getBirthday());
-            log.debug("Обновили дату рождения пользователя - {}", oldUser.getBirthday());
-        }
-
-        if (user.getEmail() != null) {
-            oldUser.setEmail(user.getEmail());
-            log.debug("Обновили почту пользователя - {}", oldUser.getEmail());
-        }
-
-        if (user.getLogin() != null) {
-            oldUser.setLogin(user.getLogin());
-            log.debug("Обновили логин пользователя - {}", oldUser.getLogin());
-        }
-
-        log.info("Данные пользователя с id = {} успешно обновлены", user.getId());
-
-        return ResponseEntity.ok(oldUser);
+        return ResponseEntity.ok(userService.updateUser(user));
     }
 
-    private Long generateNextId() {
-        log.trace("Генерация нового id");
-        long currentId = users
-                .keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0L);
+    @PutMapping
+    @RequestMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Вызван эндпоинт на добавление друга");
+        return ResponseEntity.ok(userService.addFriend(id, friendId));
+    }
 
-        return currentId + 1;
+    @DeleteMapping
+    @RequestMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<User> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        log.info("Вызван эндпоинт на удаление друга");
+        return ResponseEntity.ok(userService.deleteFriend(id, friendId));
+    }
+
+    @GetMapping
+    @RequestMapping("/{id}/friends")
+    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+        log.info("Вызван эндпоинт на получение списка всех друзей");
+        return ResponseEntity.ok(userService.getFriends(id));
+    }
+
+    @GetMapping
+    @RequestMapping("/{id}/friends/common/{otherId}")
+    public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        log.info("Вызван эндпоинт на получение списка общих друзей у двух пользователей");
+        return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
 }
