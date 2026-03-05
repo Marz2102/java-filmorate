@@ -23,11 +23,6 @@ public class UserService {
     }
 
     public User addUser(final User user) {
-        if (user == null) {
-            log.warn("Пустой запрос");
-            throw new ValidationException("Отсутствует тело запроса");
-        }
-
         if (user.getName() == null || user.getName().isEmpty()) {
             user.setName(user.getLogin());
             log.debug("Имя пусто, используется логин - {}", user.getName());
@@ -37,12 +32,8 @@ public class UserService {
     }
 
     public User updateUser(final User user) {
-        if (user == null) {
-            throw new ValidationException("Отсутствует тело запроса");
-        }
-
         validateRequestBody(user);
-        log.trace("Валидация запроса прошла успешно");
+        log.info("Валидация запроса прошла успешно");
 
         checkToFindById(user.getId());
         User oldUser = userStorage.findById(user.getId()).get();
@@ -92,6 +83,10 @@ public class UserService {
     public List<User> getCommonFriends(Long id, Long otherId) {
         checkToFindById(id);
         return userStorage.getCommonFriends(id, otherId);
+    }
+
+    public List<User> clearStorage() {
+        return userStorage.clear();
     }
 
     private void checkToFindById(Long id) {

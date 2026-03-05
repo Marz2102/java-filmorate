@@ -12,7 +12,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/films")
+@RequestMapping("/films")
 public class FilmController {
     private final FilmService filmService;
 
@@ -40,25 +40,28 @@ public class FilmController {
         return ResponseEntity.ok(filmService.updateFilm(film));
     }
 
-    @PutMapping
-    @RequestMapping(value = "/{id}/like/{userId}")
+    @PutMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> addLike(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Вызван эндпоинт на добавление лайка");
         return ResponseEntity.ok(filmService.addLike(id, userId));
     }
 
-    @DeleteMapping
-    @RequestMapping(value = "/{id}/like/{userId}")
+    @DeleteMapping("/{id}/like/{userId}")
     public ResponseEntity<Film> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
         log.info("Вызван эндпоинт на удаление лайка");
         return ResponseEntity.ok(filmService.deleteLike(id, userId));
     }
 
-    @GetMapping
-    @RequestMapping(value = "/popular")
+    @GetMapping("/popular")
     public ResponseEntity<List<Film>> getMostLikedFilms(
             @RequestParam(name="count", required = false, defaultValue = "10") int count) {
         log.info("Вызван эндпоинт на получение списка самых популярных фильмов");
         return ResponseEntity.ok(filmService.getMostLikedFilms(count));
+    }
+
+    @PostMapping("/clear")
+    public ResponseEntity<List<Film>> clearStorage() {
+        log.info("Вызван эндпоинт на полное удаление базы фильмов (для теста)");
+        return ResponseEntity.ok(filmService.clearStorage());
     }
 }

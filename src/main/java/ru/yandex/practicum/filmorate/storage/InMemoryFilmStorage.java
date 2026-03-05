@@ -13,7 +13,7 @@ import java.util.Optional;
 public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Optional<Film> findById(Long id) {
-        return Optional.of(films.get(id));
+        return Optional.ofNullable(films.get(id));
     }
 
     @Override
@@ -67,6 +67,12 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .toList();
     }
 
+    @Override
+    public List<Film> clear() {
+        List<Film> allFilms = new ArrayList<>(films.values());
+        films.clear();
+        return allFilms;
+    }
 
     @Override
     public Long generateNextId() {

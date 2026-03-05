@@ -14,7 +14,7 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Optional<User> findById(Long id) {
-        return Optional.of(users.get(id));
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
@@ -90,6 +90,13 @@ public class InMemoryUserStorage implements UserStorage {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
+    }
+
+    @Override
+    public List<User> clear() {
+        List<User> allUsers = new ArrayList<>(users.values());
+        users.clear();
+        return allUsers;
     }
 
     @Override

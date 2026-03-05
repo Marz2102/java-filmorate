@@ -28,11 +28,6 @@ public class FilmService {
     }
 
     public Film addFilm(final Film film) {
-        if (film == null) {
-            log.warn("Пустой запрос");
-            throw new ValidationException("Отсутствует тело запроса");
-        }
-
         if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
             log.warn("Проблема с полем 'Дата релиза'");
             throw new ValidationException("Дата релиза не может быть раньше " + CINEMA_BIRTHDAY);
@@ -42,12 +37,8 @@ public class FilmService {
     }
 
     public Film updateFilm(final Film film) {
-        if (film == null) {
-            throw new ValidationException("Отсутствует тело запроса");
-        }
-
         validateRequestBody(film);
-        log.trace("Валидация запроса прошла успешно");
+        log.info("Валидация запроса прошла успешно");
 
         checkToFindFilmById(film.getId());
         Film oldFilm = filmStorage.findById(film.getId()).get();
@@ -91,6 +82,10 @@ public class FilmService {
 
     public List<Film> getMostLikedFilms(int count) {
         return filmStorage.getMostLikedFilms(count);
+    }
+
+    public List<Film> clearStorage() {
+        return filmStorage.clear();
     }
 
     private void checkToFindFilmById(Long id) {
