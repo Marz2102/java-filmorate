@@ -4,13 +4,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Repository
 public class InMemoryUserStorage implements UserStorage {
+    private final Map<Long, User> users = new HashMap<>();
 
     @Override
     public Optional<User> findById(Long id) {
@@ -90,13 +89,6 @@ public class InMemoryUserStorage implements UserStorage {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
-    }
-
-    @Override
-    public List<User> clear() {
-        List<User> allUsers = new ArrayList<>(users.values());
-        users.clear();
-        return allUsers;
     }
 
     @Override

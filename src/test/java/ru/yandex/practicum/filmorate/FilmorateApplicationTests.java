@@ -1,11 +1,11 @@
 package ru.yandex.practicum.filmorate;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
+import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -16,15 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class FilmorateApplicationTests {
 	private static final String BASE_URL = "http://localhost:8080";
 	private final TestRestTemplate restTemplate = new TestRestTemplate();
-
-	@BeforeEach
-	void clearContext() {
-		restTemplate.postForEntity(BASE_URL + "/users/clear", null, Void.class);
-		restTemplate.postForEntity(BASE_URL + "/films/clear", null, Void.class);
-	}
 
 	@Test
 	void getEmptyListOfUsers() {

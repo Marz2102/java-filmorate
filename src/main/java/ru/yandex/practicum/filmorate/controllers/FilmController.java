@@ -54,14 +54,8 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<Film>> getMostLikedFilms(
-            @RequestParam(name="count", required = false, defaultValue = "10") int count) {
+            @RequestParam(name = "count", required = false, defaultValue = "10") int count) {
         log.info("Вызван эндпоинт на получение списка самых популярных фильмов");
         return ResponseEntity.ok(filmService.getMostLikedFilms(count));
-    }
-
-    @PostMapping("/clear")
-    public ResponseEntity<List<Film>> clearStorage() {
-        log.info("Вызван эндпоинт на полное удаление базы фильмов (для теста)");
-        return ResponseEntity.ok(filmService.clearStorage());
     }
 }

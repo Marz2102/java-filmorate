@@ -4,13 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Repository
 public class InMemoryFilmStorage implements FilmStorage {
+    private final Map<Long, Film> films = new HashMap<>();
+
     @Override
     public Optional<Film> findById(Long id) {
         return Optional.ofNullable(films.get(id));
@@ -65,13 +65,6 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .sorted((f1, f2) -> Integer.compare(f2.getLikedUsers().size(), f1.getLikedUsers().size()))
                 .limit(count)
                 .toList();
-    }
-
-    @Override
-    public List<Film> clear() {
-        List<Film> allFilms = new ArrayList<>(films.values());
-        films.clear();
-        return allFilms;
     }
 
     @Override

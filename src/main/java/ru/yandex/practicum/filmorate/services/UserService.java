@@ -85,10 +85,6 @@ public class UserService {
         return userStorage.getCommonFriends(id, otherId);
     }
 
-    public List<User> clearStorage() {
-        return userStorage.clear();
-    }
-
     private void checkToFindById(Long id) {
         if (userStorage.findById(id).isEmpty()) {
             log.info("Не найдено пользователя с указанным id - {}", id);

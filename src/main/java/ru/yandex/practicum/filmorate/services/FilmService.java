@@ -84,10 +84,6 @@ public class FilmService {
         return filmStorage.getMostLikedFilms(count);
     }
 
-    public List<Film> clearStorage() {
-        return filmStorage.clear();
-    }
-
     private void checkToFindFilmById(Long id) {
         if (filmStorage.findById(id).isEmpty()) {
             log.info("Не найдено фильма с указанным id - {}", id);

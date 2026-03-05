@@ -63,10 +63,4 @@ public class UserController {
         log.info("Вызван эндпоинт на получение списка общих друзей у двух пользователей");
         return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
-
-    @PostMapping("/clear")
-    public ResponseEntity<List<User>> clearStorage() {
-        log.info("Вызван эндпоинт на полное удаление базы пользователей (для теста)");
-        return ResponseEntity.ok(userService.clearStorage());
-    }
 }
