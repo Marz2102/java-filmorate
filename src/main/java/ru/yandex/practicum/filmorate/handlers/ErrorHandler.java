@@ -1,19 +1,34 @@
 package ru.yandex.practicum.filmorate.handlers;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestControllerAdvice
 public class ErrorHandler {
 
-    @ExceptionHandler
+    @ExceptionHandler({ValidationException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(final ValidationException e) {
-        return new ErrorResponse("Ошибка валидации данных", e.getMessage());
+    public ErrorResponse handleValidationException(final Exception e) {
+        if (e instanceof ValidationException) {
+            return new ErrorResponse("Ошибка валидации данных", e.getMessage());
+        }
+
+        MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
+        String message = exception.getBindingResult().getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + " - " + error.getDefaultMessage())
+                .collect(Collectors.joining("\n"));
+
+        return new ErrorResponse("Ошибка валидации данных", message);
     }
 
     @ExceptionHandler
@@ -27,4 +42,5 @@ public class ErrorHandler {
     public ErrorResponse handleInternalServerException(final Exception e) {
         return new ErrorResponse("Ошибка сервера", e.getMessage());
     }
+
 }
