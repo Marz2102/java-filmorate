@@ -20,6 +20,12 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        log.info("Вызван эндпоинт на получение пользователя по id");
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getUsers() {
         log.info("Вызван эндпоинт на получение всех пользователей");

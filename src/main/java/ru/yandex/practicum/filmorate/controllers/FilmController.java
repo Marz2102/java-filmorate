@@ -20,6 +20,12 @@ public class FilmController {
         this.filmService = filmService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Film> getFilmById(@PathVariable("id") Long id) {
+        log.info("Вызван эндпоинт на получение фильма по id");
+        return ResponseEntity.ok(filmService.getFilmById(id));
+    }
+
     @GetMapping
     public ResponseEntity<List<Film>> getFilms() {
         log.info("Вызван эндпоинт на получение всех фильмов");
@@ -27,7 +33,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public ResponseEntity<Film> addUser(@Valid @RequestBody Film film) {
+    public ResponseEntity<Film> addFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на создание нового фильма");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -35,7 +41,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public ResponseEntity<Film> updateUser(@Valid @RequestBody Film film) {
+    public ResponseEntity<Film> updateFilm(@Valid @RequestBody Film film) {
         log.info("Вызван эндпоинт на обновление данных фильма");
         return ResponseEntity.ok(filmService.updateFilm(film));
     }

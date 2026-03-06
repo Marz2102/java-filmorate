@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,13 +14,18 @@ import java.util.List;
 @Slf4j
 @Service
 public class FilmService {
-    private final InMemoryUserStorage userStorage;
-    private final InMemoryFilmStorage filmStorage;
+    private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
-    public FilmService(final InMemoryUserStorage userStorage, InMemoryFilmStorage filmStorage) {
+    public FilmService(final UserStorage userStorage, FilmStorage filmStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+    }
+
+    public Film getFilmById(Long id) {
+        checkToFindFilmById(id);
+        return filmStorage.findById(id).get();
     }
 
     public List<Film> getFilms() {
@@ -81,6 +86,10 @@ public class FilmService {
     }
 
     public List<Film> getMostLikedFilms(int count) {
+        if (count <= 0) {
+            log.info("Параметр count = {}", count);
+            throw new ValidationException("Укажите положительный параметр count");
+        }
         return filmStorage.getMostLikedFilms(count);
     }
 

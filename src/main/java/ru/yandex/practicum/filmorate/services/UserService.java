@@ -5,17 +5,22 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.List;
 
 @Slf4j
 @Service
 public class UserService {
-    private final InMemoryUserStorage userStorage;
+    private final UserStorage userStorage;
 
-    public UserService(final InMemoryUserStorage userStorage) {
+    public UserService(final UserStorage userStorage) {
         this.userStorage = userStorage;
+    }
+
+    public User getUserById(Long id) {
+        checkToFindById(id);
+        return userStorage.findById(id).get();
     }
 
     public List<User> getUsers() {
@@ -82,6 +87,8 @@ public class UserService {
 
     public List<User> getCommonFriends(Long id, Long otherId) {
         checkToFindById(id);
+        checkToFindById(otherId);
+
         return userStorage.getCommonFriends(id, otherId);
     }
 
