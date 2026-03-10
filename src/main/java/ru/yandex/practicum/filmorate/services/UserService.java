@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
@@ -14,7 +15,7 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(final UserStorage userStorage) {
+    public UserService(@Qualifier("DAO") final UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 

@@ -4,6 +4,7 @@ import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 public interface UserStorage {
     Optional<User> findById(Long id);
@@ -22,5 +23,10 @@ public interface UserStorage {
 
     List<User> getCommonFriends(Long userId1, Long userId2);
 
-    Long generateNextId();
+    //Добавил дефолтное определение метода, чтобы не имплементировать его в UserDbStorage
+    //(в принципе он вообще не нужен в новой реализации)
+    default Long generateNextId() {
+        Random random = new Random();
+        return random.nextLong();
+    };
 }
