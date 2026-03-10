@@ -15,7 +15,7 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(@Qualifier("DAO") final UserStorage userStorage) {
+    public UserService(@Qualifier("UserDao") final UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 

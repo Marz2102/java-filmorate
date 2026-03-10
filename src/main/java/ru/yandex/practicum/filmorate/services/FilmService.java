@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
@@ -18,7 +19,7 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
-    public FilmService(final UserStorage userStorage, FilmStorage filmStorage) {
+    public FilmService(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final FilmStorage filmStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
     }

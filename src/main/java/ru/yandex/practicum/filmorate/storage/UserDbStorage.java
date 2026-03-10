@@ -13,7 +13,7 @@ import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Optional;
 
-@Repository("DAO")
+@Repository("UserDao")
 public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbc;
     private final UserRowMapper userRowMapper;
@@ -25,7 +25,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public Optional<User> findById(Long id) {
-        String query = "SELECT * FROM users WHERE id = ?";
+        String query = "SELECT id, email, name, login, birthday_date FROM users WHERE id = ?";
         try {
             User user = jdbc.queryForObject(query, userRowMapper, id);
             return Optional.ofNullable(user);
@@ -36,13 +36,13 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getUsers() {
-        String query = "SELECT * FROM users";
+        String query = "SELECT id, email, name, login, birthday_date FROM users";
         return jdbc.query(query, userRowMapper);
     }
 
     @Override
     public User addUser(User user) {
-        String query = "INSERT INTO users (email, name, login, birthday) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO users (email, name, login, birthday_date) VALUES (?, ?, ?, ?)";
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
@@ -54,7 +54,7 @@ public class UserDbStorage implements UserStorage {
             return ps;
         }, keyHolder);
 
-        Long id = keyHolder.getKey().longValue();
+        Long id = keyHolder.getKeyAs(Long.class);
         if (id != null) {
             user.setId(id);
         } else {
@@ -66,7 +66,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User updateUser(User user) {
-        String query = "UPDATE users SET email = ?, name = ?, login = ?, birthday = ? WHERE id = ?";
+        String query = "UPDATE users SET email = ?, name = ?, login = ?, birthday_date = ? WHERE id = ?";
         int rowsUpdated = jdbc.update(query,
                 user.getEmail(),
                 user.getName(),
@@ -98,7 +98,7 @@ public class UserDbStorage implements UserStorage {
         jdbc.update(query, friendId, userId);
 
         User friend = findById(friendId).get();
-        friend.addFriend(userId);
+        friend.deleteFriend(userId);
         return friend;
     }
 

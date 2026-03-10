@@ -4,6 +4,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 public interface FilmStorage {
     Optional<Film> findById(Long id);
@@ -20,5 +21,10 @@ public interface FilmStorage {
 
     List<Film> getMostLikedFilms(int count);
 
-    Long generateNextId();
+    //Добавил дефолтное определение метода, чтобы не имплементировать его в FilmDbStorage
+    //(в принципе он вообще не нужен в новой реализации)
+    default Long generateNextId() {
+        Random random = new Random();
+        return random.nextLong();
+    };
 }

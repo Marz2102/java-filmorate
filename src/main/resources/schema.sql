@@ -1,25 +1,37 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    email TEXT,
-    name TEXT,
-    login TEXT,
-    birthday DATE,
-    friends INT ARRAY
+    email VARCHAR(100),
+    name VARCHAR(100),
+    login VARCHAR(100),
+    birthday_date DATE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS films (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name TEXT,
+    name VARCHAR(100),
     description VARCHAR(200),
-    releaseDate DATE,
+    release_date DATE,
     duration INT,
-    likedUsers INT ARRAY
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS friends (
     user_id BIGINT,
     friend_id BIGINT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, friend_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (friend_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS likes (
+    user_id BIGINT,
+    film_id BIGINT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, film_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (film_id) REFERENCES films(id)
 )
