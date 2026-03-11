@@ -16,12 +16,10 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.ratingDto.RatingDto;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.*;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,23 +27,42 @@ import java.util.stream.Collectors;
 public class FilmService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final GenreStorage genreStorage;
+    private final RatingStorage ratingStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
-    public FilmService(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final FilmStorage filmStorage) {
+    public FilmService(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final FilmStorage filmStorage,
+                       @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("RatingDao") final RatingStorage ratingStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.genreStorage = genreStorage;
+        this.ratingStorage = ratingStorage;
     }
 
     public FilmDto getFilmById(Long id) {
-        return filmStorage.findById(id)
-                .map(FilmMapper::mapToFilmDto)
+        Film film = filmStorage.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм с id - " + id + " не найден"));
+
+        Set<Genre> genreIds = filmStorage.getGenresForFilmId(id);
+        film.setGenres(genreIds);
+
+        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(id);
+        Rating rating = optionalRating.orElse(null);
+        film.setMpa(rating);
+
+        return FilmMapper.mapToFilmDto(film);
     }
 
     public List<FilmDto> getFilms() {
-        return filmStorage.getFilms().stream()
-                .map(FilmMapper::mapToFilmDto)
-                .toList();
+        List<Film> films = filmStorage.getFilms();
+
+        Map<Long, Set<Genre>> allGenres = filmStorage.getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.get(film.getId())));
+
+        Map<Long, Rating> allRatings = filmStorage.getRatingForAllFilms();
+        films.forEach(film -> film.setMpa(allRatings.get(film.getId())));
+
+        return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
     }
 
     public FilmDto addFilm(FilmCreateDto filmCreateDto) {
@@ -84,6 +101,10 @@ public class FilmService {
         updatedFilm.setMpa(rating);
 
         updatedFilm = filmStorage.updateFilm(updatedFilm);
+
+        Set<Genre> genreIds = filmStorage.getGenresForFilmId(updatedFilm.getId());
+        updatedFilm.setGenres(genreIds);
+
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
@@ -91,6 +112,14 @@ public class FilmService {
         checkToFindByIds(filmId, userId);
 
         Film film = filmStorage.addLike(filmId, userId);
+
+        Set<Genre> genreIds = filmStorage.getGenresForFilmId(filmId);
+        film.setGenres(genreIds);
+
+        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(filmId);
+        Rating rating = optionalRating.orElse(null);
+        film.setMpa(rating);
+
         return FilmMapper.mapToFilmDto(film);
     }
 
@@ -98,6 +127,14 @@ public class FilmService {
         checkToFindByIds(filmId, userId);
 
         Film film = filmStorage.deleteLike(filmId, userId);
+
+        Set<Genre> genreIds = filmStorage.getGenresForFilmId(filmId);
+        film.setGenres(genreIds);
+
+        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(filmId);
+        Rating rating = optionalRating.orElse(null);
+        film.setMpa(rating);
+
         return FilmMapper.mapToFilmDto(film);
     }
 
@@ -107,31 +144,37 @@ public class FilmService {
             throw new ValidationException("Укажите положительный параметр count");
         }
 
-        return filmStorage.getMostLikedFilms(count).stream()
-                .map(FilmMapper::mapToFilmDto)
-                .toList();
+        List<Film> films = filmStorage.getMostLikedFilms(count);
+
+        Map<Long, Set<Genre>> allGenres = filmStorage.getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.get(film.getId())));
+
+        Map<Long, Rating> allRatings = filmStorage.getRatingForAllFilms();
+        films.forEach(film -> film.setMpa(allRatings.get(film.getId())));
+
+        return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
     }
 
     public GenreDto getGenreById(Long id) {
-        return filmStorage.findGenreById(id)
+        return genreStorage.findById(id)
                 .map(GenreMapper::mapToGenreDto)
                 .orElseThrow(() -> new NotFoundException("Жанр с id - " + id + " не найден"));
     }
 
     public List<GenreDto> getGenres() {
-        return filmStorage.getGenres().stream()
+        return genreStorage.getGenres().stream()
                 .map(GenreMapper::mapToGenreDto)
                 .toList();
     }
 
     public RatingDto getRatingById(Long id) {
-        return filmStorage.findRatingById(id)
+        return ratingStorage.findById(id)
                 .map(RatingMapper::mapToRatingDto)
                 .orElseThrow(() -> new NotFoundException("Рейтинг с id - " + id + " не найден"));
     }
 
     public List<RatingDto> getRatings() {
-        return filmStorage.getRatings().stream()
+        return ratingStorage.getRatings().stream()
                 .map(RatingMapper::mapToRatingDto)
                 .toList();
     }
@@ -160,7 +203,7 @@ public class FilmService {
             return;
         }
 
-        Set<Long> allValidIds = filmStorage.getGenres()
+        Set<Long> allValidIds = genreStorage.getGenres()
                 .stream()
                 .map(Genre::getId)
                 .collect(Collectors.toSet());
@@ -180,7 +223,7 @@ public class FilmService {
             return;
         }
 
-        Set<Long> allValidIds = filmStorage.getRatings()
+        Set<Long> allValidIds = ratingStorage.getRatings()
                 .stream()
                 .map(Rating::getId)
                 .collect(Collectors.toSet());

@@ -12,6 +12,8 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.RatingStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
@@ -28,11 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class FilmorateApplicationTests {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final GenreStorage genreStorage;
+    private final RatingStorage ratingStorage;
 
     @Autowired
-    FilmorateApplicationTests(@Qualifier("UserDao") UserStorage userStorage, @Qualifier("FilmDao") FilmStorage filmStorage) {
+    FilmorateApplicationTests(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final  FilmStorage filmStorage,
+                              @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("RatingDao") final RatingStorage ratingStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.genreStorage = genreStorage;
+        this.ratingStorage = ratingStorage;
     }
 
     @BeforeEach
@@ -222,14 +229,14 @@ class FilmorateApplicationTests {
 
     @Test
     public void testGetGenres() {
-        assertEquals(6, filmStorage.getGenres().size());
-        assertEquals("Документальный", filmStorage.findGenreById(5L).get().getName());
+        assertEquals(6, genreStorage.getGenres().size());
+        assertEquals("Документальный", genreStorage.findById(5L).get().getName());
     }
 
     @Test
     public void testGetRatings() {
-        assertEquals(5, filmStorage.getRatings().size());
-        assertEquals("PG-13", filmStorage.findRatingById(3L).get().getName());
+        assertEquals(5, ratingStorage.getRatings().size());
+        assertEquals("PG-13", ratingStorage.findById(3L).get().getName());
     }
 }
 

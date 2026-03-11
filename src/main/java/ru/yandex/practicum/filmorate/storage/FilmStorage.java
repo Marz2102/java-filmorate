@@ -5,8 +5,9 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
+import java.util.Set;
 
 public interface FilmStorage {
     Optional<Film> findById(Long id);
@@ -23,28 +24,11 @@ public interface FilmStorage {
 
     List<Film> getMostLikedFilms(int count);
 
-    //Добавил дефолтные определения, чтобы не сломалась старая реализация InMemoryFilmStorage
-    //В FilmDbStorage методы переопределяются
-    default Optional<Genre> findGenreById(Long id) {
-        return Optional.empty();
-    }
+    Set<Genre> getGenresForFilmId(Long id);
 
-    default List<Genre> getGenres() {
-        return List.of();
-    }
+    Optional<Rating> getRatingForFilmId(Long id);
 
-    default Optional<Rating> findRatingById(Long id) {
-        return Optional.empty();
-    }
+    Map<Long, Set<Genre>> getGenresForAllFilms();
 
-    default List<Rating> getRatings() {
-        return List.of();
-    }
-
-    //Добавил дефолтное определение метода, чтобы не имплементировать его в FilmDbStorage
-    //(в принципе он вообще не нужен в новой реализации)
-    default Long generateNextId() {
-        Random random = new Random();
-        return random.nextLong();
-    }
+    Map<Long, Rating> getRatingForAllFilms();
 }
