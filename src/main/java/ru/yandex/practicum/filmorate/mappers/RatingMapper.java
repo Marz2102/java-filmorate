@@ -6,7 +6,7 @@ import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.ratingDto.RatingDto;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class RatingMapper {
+public final class RatingMapper {
 
     public static Rating mapRatingDtoToRating(RatingDto ratingDto) {
         Rating rating = new Rating();

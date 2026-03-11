@@ -28,5 +28,5 @@ public interface UserStorage {
     default Long generateNextId() {
         Random random = new Random();
         return random.nextLong();
-    };
+    }
 }

@@ -1,254 +1,235 @@
 package ru.yandex.practicum.filmorate;
 
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Slf4j
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest
+@AutoConfigureTestDatabase
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class FilmorateApplicationTests {/*
-	private static final String BASE_URL = "http://localhost:8080";
-	private final TestRestTemplate restTemplate = new TestRestTemplate();
+class FilmorateApplicationTests {
+    private final UserStorage userStorage;
+    private final FilmStorage filmStorage;
 
-	@Test
-	void getEmptyListOfUsers() {
-		log.info("Тест GET запроса пользователей с пустого сервера");
-		ResponseEntity<User[]> response = restTemplate.getForEntity(BASE_URL + "/users", User[].class);
-		assertEquals(200, response.getStatusCode().value());
+    @Autowired
+    FilmorateApplicationTests(@Qualifier("UserDao") UserStorage userStorage, @Qualifier("FilmDao") FilmStorage filmStorage) {
+        this.userStorage = userStorage;
+        this.filmStorage = filmStorage;
+    }
 
-		User[] users = response.getBody();
-		assertNotNull(users);
-        assertEquals(0, users.length);
+    @BeforeEach
+    void setUp() {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("test@test.com");
+        user.setLogin("test");
+        user.setName("TestName");
+        user.setBirthday(LocalDate.of(2000, 1, 1));
 
-		log.info("Тест прошел успешно");
-	}
+        Film film = new Film();
+        film.setId(1L);
+        film.setName("TestFilm");
+        film.setDescription("TestDescription");
+        film.setDuration(100);
+        film.setReleaseDate(LocalDate.of(1990, 12, 12));
+        film.setGenres(new HashSet<>(List.of(new Genre(1L, "Комедия"),
+                new Genre(3L, "Мультфильм"))));
+        film.setMpa(new Rating(1L, "G"));
 
-	@Test
-	void getEmptyListOfFilms() {
-		log.info("Тест GET запроса фильмов с пустого сервера");
-		ResponseEntity<Film[]> response = restTemplate.getForEntity(BASE_URL + "/films", Film[].class);
-		assertEquals(200, response.getStatusCode().value());
+        userStorage.addUser(user);
+        filmStorage.addFilm(film);
+    }
 
-		Film[] films = response.getBody();
-		assertNotNull(films);
-		assertEquals(0, films.length);
+    @Test
+    public void testFindUserAndFilmById() {
+        Optional<User> userOptional = userStorage.findById(1L);
 
-		log.info("Тест прошел успешно");
-	}
+        assertThat(userOptional)
+                .isPresent()
+                .hasValueSatisfying(user ->
+                        assertThat(user).hasFieldOrPropertyWithValue("id", 1L)
+                );
 
-	@Test
-	void getNotEmptyListOfUsers() {
-		log.info("Тест GET запроса пользователей из непустого сервера");
-		User someUser = new User(1L, "1@aaa.com", "abc", "", LocalDate.of(2000, 1, 1), new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/users", someUser, User.class);
+        Optional<Film> filmOptional = filmStorage.findById(1L);
 
-		ResponseEntity<User[]> response = restTemplate.getForEntity(BASE_URL + "/users", User[].class);
-		assertEquals(200, response.getStatusCode().value());
+        assertThat(filmOptional)
+                .isPresent()
+                .hasValueSatisfying(film ->
+                        assertThat(film).hasFieldOrPropertyWithValue("id", 1L)
+                );
+    }
 
-		User[] users = response.getBody();
+    @Test
+    public void testFindAllUsersAndFilms() {
+        User user = new User();
+        user.setId(2L);
+        user.setEmail("Test@test2.com");
+        user.setLogin("test2");
+        user.setName("TestName2");
+        user.setBirthday(LocalDate.of(2000, 1, 1));
 
-		assertNotNull(users);
-		assertEquals(1, users.length);
-		assertEquals("1@aaa.com", users[0].getEmail());
+        Film film = new Film();
+        film.setId(2L);
+        film.setName("TestFilm2");
+        film.setDescription("TestDescription2");
+        film.setDuration(150);
+        film.setReleaseDate(LocalDate.of(1980, 12, 12));
 
-		log.info("Тест прошел успешно");
-	}
+        List<User> users = userStorage.getUsers();
+        List<Film> films = filmStorage.getFilms();
 
-	@Test
-	void getNotEmptyListOfFilms() {
-		log.info("Тест GET запроса фильмов из непустого сервера");
-		Film someFilm1 = new Film(1L, "Аватар", "Самый кассовый фильм", LocalDate.of(2009, 1, 1), 150, new HashSet<>());
-		Film someFilm2 = new Film(2L, "Гладиатор", null, LocalDate.of(2000, 2, 1), 130, new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/films", someFilm1, Film.class);
-		restTemplate.postForEntity(BASE_URL + "/films", someFilm2, Film.class);
+        assertEquals(1, users.size());
+        assertEquals(1, films.size());
 
-		ResponseEntity<Film[]> response = restTemplate.getForEntity(BASE_URL + "/films", Film[].class);
-		assertEquals(200, response.getStatusCode().value());
+        userStorage.addUser(user);
+        filmStorage.addFilm(film);
 
-		Film[] films = response.getBody();
-		System.out.println(films.length);
+        users = userStorage.getUsers();
+        films = filmStorage.getFilms();
 
-		assertNotNull(films);
-		assertEquals(2, films.length);
-		assertEquals(150, films[0].getDuration());
-		assertEquals("Гладиатор", films[1].getName());
+        assertEquals(2, users.size());
+        assertEquals(2, films.size());
+    }
 
-		log.info("Тест прошел успешно");
-	}
+    @Test
+    public void testUpdateUserAndFilm() {
+        User user = new User();
+        user.setId(1L);
+        user.setEmail("UpdateTest@test.com");
+        user.setLogin("test");
+        user.setName("TestName");
+        user.setBirthday(LocalDate.of(2000, 1, 1));
 
-	@Test
-	void postFilmWithoutName() {
-		log.info("Тест POST запроса фильма без названия");
-		Film film = new Film(1L,"",null, LocalDate.of(1895, 12, 28), 150, new HashSet<>());
+        Film film = new Film();
+        film.setId(1L);
+        film.setName("UpdateTestFilm");
+        film.setDescription("TestDescription");
+        film.setDuration(100);
+        film.setReleaseDate(LocalDate.of(1990, 12, 12));
 
-		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
-		assertEquals(400, response.getStatusCode().value(), "Должна вернуться ошибка 400");
+        user = userStorage.addUser(user);
+        film = filmStorage.addFilm(film);
 
-		log.info("Тест прошел успешно");
-	}
+        assertEquals("UpdateTest@test.com", user.getEmail());
+        assertEquals("UpdateTestFilm", film.getName());
+    }
 
-	@Test
-	void postUserWithoutLogin() {
-		log.info("Тест POST запроса пользователя без логина");
-		User user = new User(1L, "1@aaa.com", "", "ab", LocalDate.of(2000, 1, 1), new HashSet<>());
+    @Test
+    public void testAddAndDeleteFriend() {
+        User friend = new User();
+        friend.setId(2L);
+        friend.setEmail("test2@test.com");
+        friend.setLogin("test2");
+        friend.setName("TestName2");
+        friend.setBirthday(LocalDate.of(2000, 1, 1));
 
-		ResponseEntity<User> response = restTemplate.postForEntity(BASE_URL + "/users", user, User.class);
-		assertEquals(400, response.getStatusCode().value(), "Должна вернуться ошибка 400");
+        userStorage.addUser(friend);
+        userStorage.addFriend(1L, 2L);
 
-		log.info("Тест прошел успешно");
-	}
+        assertEquals(1, userStorage.getFriends(1L).size());
+        assertEquals(0, userStorage.getFriends(2L).size());
 
-	@Test
-	void postFilmWithBadReleaseDate() {
-		log.info("Тест POST запроса фильма с некорректной датой релиза");
-		Film film = new Film(1L, "Аватар", "", LocalDate.of(1895, 2, 27), 150, new HashSet<>());
+        userStorage.deleteFriend(1L, 2L);
 
-		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
-		assertEquals(400, response.getStatusCode().value(), "Должна вернуться ошибка 400");
+        assertEquals(0, userStorage.getFriends(1L).size());
+        assertEquals(0, userStorage.getFriends(2L).size());
+    }
 
-		log.info("Тест прошел успешно");
-	}
+    @Test
+    public void testGetCommonFriends() {
+        User friend1 = new User();
+        friend1.setId(2L);
+        friend1.setEmail("test2@test.com");
+        friend1.setLogin("test2");
+        friend1.setName("TestName2");
+        friend1.setBirthday(LocalDate.of(2000, 1, 1));
 
-	@Test
-	void postUserWithBadEmail() {
-		log.info("Тест POST запроса пользователя с некорректной почтой");
-		User user = new User(1L, "1aaa.com", "XY", "ab", LocalDate.of(2000, 1, 1), new HashSet<>());
+        User friend2 = new User();
+        friend2.setId(3L);
+        friend2.setEmail("test3@test.com");
+        friend2.setLogin("test3");
+        friend2.setName("TestName3");
+        friend2.setBirthday(LocalDate.of(2000, 1, 1));
 
-		ResponseEntity<User> response = restTemplate.postForEntity(BASE_URL + "/users", user, User.class);
-		assertEquals(400, response.getStatusCode().value(), "Должна вернуться ошибка 400");
+        userStorage.addUser(friend1);
+        userStorage.addUser(friend2);
 
-		log.info("Тест прошел успешно");
-	}
+        assertEquals(0, userStorage.getCommonFriends(1L, 3L).size());
 
-	@Test
-	void postNullRequestUser() {
-		log.info("Тест POST запроса фильма с отсутствующим телом");
-		ResponseEntity<User> response = restTemplate.postForEntity(BASE_URL + "/users", null, User.class);
-		assertEquals(415, response.getStatusCode().value(), "Должна вернуться ошибка 415");
+        userStorage.addFriend(1L, 2L);
+        userStorage.addFriend(3L, 2L);
 
-		log.info("Тест прошел успешно");
-	}
+        assertEquals(1, userStorage.getCommonFriends(1L, 3L).size());
 
-	@Test
-	void postNullRequestFilm() {
-		log.info("Тест POST запроса пользователя с отсутствующим телом");
-		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", null, Film.class);
-		assertEquals(415, response.getStatusCode().value(), "Должна вернуться ошибка 415");
+        userStorage.deleteFriend(1L, 2L);
 
-		log.info("Тест прошел успешно");
-	}
+        assertEquals(0, userStorage.getCommonFriends(1L, 3L).size());
+    }
 
-	@Test
-	void postFilmWithoutId() {
-		log.info("Тест POST запроса фильма без id");
-		Film film = new Film(null, "Аватар", "abcbcabcab", LocalDate.of(2009, 1, 1), 150, new HashSet<>());
+    @Test
+    public void testGetMostLikedFilms() {
+        User user = new User();
+        user.setId(2L);
+        user.setEmail("Test@test2.com");
+        user.setLogin("test2");
+        user.setName("TestName2");
+        user.setBirthday(LocalDate.of(2000, 1, 1));
 
-		ResponseEntity<Film> response = restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
-		assertEquals(201, response.getStatusCode().value());
+        Film film = new Film();
+        film.setId(2L);
+        film.setName("TestFilm2");
+        film.setDescription("TestDescription2");
+        film.setDuration(100);
+        film.setReleaseDate(LocalDate.of(1990, 12, 12));
 
-		Film postedFilm = response.getBody();
-		assertNotNull(postedFilm);
-		assertEquals(1L, postedFilm.getId());
+        user = userStorage.addUser(user);
+        film = filmStorage.addFilm(film);
 
-		log.info("Тест прошел успешно");
-	}
+        System.out.println(filmStorage.getFilms());
 
-	@Test
-	void postSomeUsersWithoutId() {
-		log.info("Тест POST запроса пользователей без id");
-		User user1 = new User(null, "1aaa@bbb.com", "XYZ", "abc", LocalDate.of(2000, 1, 1), new HashSet<>());
-		User user2 = new User(null, "2aaa@bbb.com", "XY", "ab", LocalDate.of(2000, 1, 1), new HashSet<>());
+        assertEquals(2, filmStorage.getMostLikedFilms(100).size());
 
-		ResponseEntity<User> postResponse1 = restTemplate.postForEntity(BASE_URL + "/users", user1, User.class);
-		ResponseEntity<User> postResponse2 = restTemplate.postForEntity(BASE_URL + "/users", user2, User.class);
-		assertEquals(201, postResponse1.getStatusCode().value());
-		assertEquals(201, postResponse2.getStatusCode().value());
+        filmStorage.addLike(1L, 1L);
 
-		ResponseEntity<User[]> getResponse = restTemplate.getForEntity(BASE_URL + "/users", User[].class);
-		assertEquals(200, getResponse.getStatusCode().value());
+        List<Film> films = filmStorage.getMostLikedFilms(1);
+        assertEquals(1L, films.getFirst().getId());
 
-		User[] users = getResponse.getBody();
+        filmStorage.deleteLike(1L, 1L);
+        filmStorage.addLike(2L, 2L);
 
-		assertNotNull(users);
-		assertEquals(2, users.length);
-		assertEquals(2L, users[1].getId());
+        films = filmStorage.getMostLikedFilms(1);
+        assertEquals(2L, films.getFirst().getId());
 
-		log.info("Тест прошел успешно");
-	}
+    }
 
-	@Test
-	void putFilmWithoutId() {
-		log.info("Тест PUT запроса фильма без id");
-		Film film = new Film(1L, "Аватар", "", LocalDate.of(2009, 1, 1), 150, new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
+    @Test
+    public void testGetGenres() {
+        assertEquals(6, filmStorage.getGenres().size());
+        assertEquals("Документальный", filmStorage.findGenreById(5L).get().getName());
+    }
 
-		Film newFilm = new Film(2L, "Аватар2", "", LocalDate.of(2009, 1, 1), 150, new HashSet<>());
-		ResponseEntity<Film> response = restTemplate.exchange(BASE_URL + "/films", HttpMethod.PUT, new HttpEntity<>(newFilm), Film.class);
-
-		assertEquals(404, response.getStatusCode().value(), "Должна вернуться ошибка 404");
-
-		log.info("Тест прошел успешно");
-	}
-
-	@Test
-	void putUserWithoutId() {
-		log.info("Тест PUT запроса пользователя без id");
-		User user = new User(null, "1aaa@bbb.com", "XYZ", "abc", LocalDate.of(2000, 1, 1), new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/users", user, User.class);
-
-		User newUser = new User(10L, "2aaa@bbb.com", "ZYX", "abc", LocalDate.of(2000, 1, 1), new HashSet<>());
-		ResponseEntity<User> response = restTemplate.exchange(BASE_URL + "/users", HttpMethod.PUT, new HttpEntity<>(newUser), User.class);
-
-		assertEquals(404, response.getStatusCode().value(), "Должна вернуться ошибка 404");
-
-		log.info("Тест прошел успешно");
-	}
-
-	@Test
-	void putNewDurationToFilm() {
-		log.info("Тест PUT запроса фильма с новой длительностью");
-		Film film = new Film(1L, "Аватар", "", LocalDate.of(2009, 1, 1), 150, new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/films", film, Film.class);
-
-		Film newFilm = new Film(1L, "Аватар", "", LocalDate.of(2009, 1, 1), 200, new HashSet<>());
-		ResponseEntity<Film> response = restTemplate.exchange(BASE_URL + "/films", HttpMethod.PUT, new HttpEntity<>(newFilm), Film.class);
-
-		assertEquals(200, response.getStatusCode().value());
-
-		Film updatedFilm = response.getBody();
-		assertNotNull(updatedFilm);
-		assertEquals(200, updatedFilm.getDuration());
-
-		log.info("Тест прошел успешно");
-	}
-
-	@Test
-	void putNewEmailAndNameToUser() {
-		log.info("Тест PUT запроса пользователя с новой почтой и именем");
-		User user = new User(1L, "1aaa@bbb.com", "XYZ", "abc", LocalDate.of(2000, 1, 1), new HashSet<>());
-		restTemplate.postForEntity(BASE_URL + "/users", user, User.class);
-
-		User newUser = new User(1L, "2aaa@bbb.com", "XYZ", "bca", LocalDate.of(2000, 1, 1), new HashSet<>());
-		ResponseEntity<User> response = restTemplate.exchange(BASE_URL + "/users", HttpMethod.PUT, new HttpEntity<>(newUser), User.class);
-
-		assertEquals(200, response.getStatusCode().value());
-
-		User updatedUser = response.getBody();
-		assertNotNull(updatedUser);
-		assertEquals("2aaa@bbb.com", updatedUser.getEmail());
-		assertEquals("bca", updatedUser.getName());
-
-		log.info("Тест прошел успешно");
-	}*/
+    @Test
+    public void testGetRatings() {
+        assertEquals(5, filmStorage.getRatings().size());
+        assertEquals("PG-13", filmStorage.findRatingById(3L).get().getName());
+    }
 }
+

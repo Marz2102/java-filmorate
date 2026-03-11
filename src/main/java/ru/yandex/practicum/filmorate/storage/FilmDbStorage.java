@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
+import javax.sql.DataSource;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.util.*;
@@ -24,13 +25,14 @@ public class FilmDbStorage implements FilmStorage {
     private final GenreRowMapper genreRowMapper;
     private final RatingRowMapper ratingRowMapper;
 
-    public FilmDbStorage(JdbcTemplate jdbc, FilmRowMapper filmRowMapper,
+    public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper,
                          GenreRowMapper genreRowMapper, RatingRowMapper ratingRowMapper) {
-        this.jdbc = jdbc;
+        this.jdbc = new JdbcTemplate(dataSource);
         this.filmRowMapper = filmRowMapper;
         this.genreRowMapper = genreRowMapper;
         this.ratingRowMapper = ratingRowMapper;
     }
+
     @Override
     public Optional<Film> findById(Long id) {
         String query = "SELECT id, name, description, release_date, duration FROM films WHERE id = ?";
@@ -77,7 +79,7 @@ public class FilmDbStorage implements FilmStorage {
             return ps;
         }, keyHolder);
 
-        Long id =(Long) Objects.requireNonNull(keyHolder.getKeys()).get("id");
+        Long id = (Long) Objects.requireNonNull(keyHolder.getKeys()).get("id");
         if (id != null) {
             film.setId(id);
         } else {
@@ -159,7 +161,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = """
                 SELECT f.id, f.name, f.description, f.release_date, f.duration
                 FROM films as f
-                INNER JOIN (SELECT film_id, count(*) as cnt_likes
+                LEFT JOIN (SELECT film_id, count(*) as cnt_likes
                             FROM likes
                             GROUP BY film_id) as t ON f.id = t.film_id
                 ORDER BY t.cnt_likes DESC

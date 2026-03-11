@@ -46,5 +46,5 @@ public interface FilmStorage {
     default Long generateNextId() {
         Random random = new Random();
         return random.nextLong();
-    };
+    }
 }

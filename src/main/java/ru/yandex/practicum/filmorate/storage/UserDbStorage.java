@@ -23,7 +23,7 @@ public class UserDbStorage implements UserStorage {
     public UserDbStorage(DataSource dataSource, UserRowMapper userRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.userRowMapper = userRowMapper;
-    };
+    }
 
     @Override
     public Optional<User> findById(Long id) {
@@ -56,7 +56,7 @@ public class UserDbStorage implements UserStorage {
             return ps;
         }, keyHolder);
 
-        Long id =(Long) keyHolder.getKeys().get("id");
+        Long id = (Long) keyHolder.getKeys().get("id");
         if (id != null) {
             user.setId(id);
         } else {
