@@ -1,22 +1,20 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.filmDto;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-public class Film {
-    private Long id;
-
+public class FilmCreateDto {
     @NotEmpty(message = "Название фильма не может быть пустым")
     private String name;
 
@@ -28,18 +26,25 @@ public class Film {
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
 
-    private Set<Genre> genres = new HashSet<>();
+    private List<FilmGenreDto> genres;
 
-    private Set<Long> likedUsers = new HashSet<>();
+    private FilmMpaDto mpa;
 
-    private Rating mpa;
+    public Set<Long> getGenreIds() {
+        if (genres == null) {
+            return Collections.emptySet();
+        }
 
-    public void addLike(Long id) {
-        likedUsers.add(id);
+        return genres.stream()
+                .map(FilmGenreDto::getId)
+                .collect(Collectors.toSet());
     }
 
-    public void deleteLike(Long id) {
-        likedUsers.remove(id);
-    }
+    public Long getRatingId() {
+        if (mpa == null) {
+            return null;
+        }
 
+        return mpa.getId();
+    }
 }

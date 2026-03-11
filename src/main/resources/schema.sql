@@ -1,3 +1,13 @@
+/*
+drop table if exists users cascade;
+drop table if exists films cascade;
+drop table if exists friends cascade;
+drop table if exists likes cascade;
+drop table if exists genres cascade;
+drop table if exists film_genres cascade;
+drop table if exists ratings cascade;
+drop table if exists film_rating cascade;
+*/
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(100),
@@ -23,8 +33,8 @@ CREATE TABLE IF NOT EXISTS friends (
     friend_id BIGINT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS likes (
@@ -32,6 +42,36 @@ CREATE TABLE IF NOT EXISTS likes (
     film_id BIGINT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, film_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (film_id) REFERENCES films(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS genres (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS film_genres (
+    film_id BIGINT,
+    genre_id BIGINT,
+    PRIMARY KEY (film_id, genre_id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS ratings (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS film_rating (
+    film_id BIGINT PRIMARY KEY,
+    rating_id BIGINT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE RESTRICT
 )
+

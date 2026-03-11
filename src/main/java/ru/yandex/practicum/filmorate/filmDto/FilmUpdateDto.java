@@ -1,6 +1,7 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.filmDto;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -8,13 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Film {
+public class FilmUpdateDto {
+    @NotNull(message = "Укажите id в теле запроса")
     private Long id;
 
     @NotEmpty(message = "Название фильма не может быть пустым")
@@ -28,18 +28,13 @@ public class Film {
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
 
-    private Set<Genre> genres = new HashSet<>();
+    private FilmMpaDto mpa;
 
-    private Set<Long> likedUsers = new HashSet<>();
+    public Long getRatingId() {
+        if (mpa == null) {
+            return null;
+        }
 
-    private Rating mpa;
-
-    public void addLike(Long id) {
-        likedUsers.add(id);
+        return mpa.getId();
     }
-
-    public void deleteLike(Long id) {
-        likedUsers.remove(id);
-    }
-
 }

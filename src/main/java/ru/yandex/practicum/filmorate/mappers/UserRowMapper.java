@@ -18,6 +18,7 @@ public class UserRowMapper implements RowMapper<User> {
         user.setEmail(rs.getString("email"));
         user.setLogin(rs.getString("login"));
         user.setBirthday(rs.getDate("birthday_date").toLocalDate());
+
         return user;
     }
 }

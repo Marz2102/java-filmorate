@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.UserRowMapper;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -54,11 +56,11 @@ public class UserDbStorage implements UserStorage {
             return ps;
         }, keyHolder);
 
-        Long id = keyHolder.getKeyAs(Long.class);
+        Long id =(Long) keyHolder.getKeys().get("id");
         if (id != null) {
             user.setId(id);
         } else {
-            throw new RuntimeException("Не удалось сохранить данные");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось добавить данные");
         }
 
         return user;
@@ -75,16 +77,15 @@ public class UserDbStorage implements UserStorage {
                 user.getId());
 
         if (rowsUpdated == 0) {
-            throw new RuntimeException("Не удалось обновить данные");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
         }
         return user;
     }
 
     @Override
     public User addFriend(Long userId, Long friendId) {
-        String query = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
+        String query = "MERGE INTO friends (user_id, friend_id) VALUES (?, ?)";
         jdbc.update(query, userId, friendId);
-        jdbc.update(query, friendId, userId);
 
         User friend = findById(friendId).get();
         friend.addFriend(userId);
@@ -95,7 +96,6 @@ public class UserDbStorage implements UserStorage {
     public User deleteFriend(Long userId, Long friendId) {
         String query = "DELETE FROM friends WHERE user_id = ? and friend_id = ?";
         jdbc.update(query, userId, friendId);
-        jdbc.update(query, friendId, userId);
 
         User friend = findById(friendId).get();
         friend.deleteFriend(userId);
@@ -105,7 +105,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getFriends(Long userId) {
         String query = """
-                SELECT u.*
+                SELECT u.id, u.email, u.name, u.login, u.birthday_date
                 FROM friends as f
                 INNER JOIN users as u ON f.friend_id = u.id
                 WHERE f.user_id = ?
@@ -116,7 +116,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getCommonFriends(Long userId1, Long userId2) {
         String query = """
-                SELECT u.*
+                SELECT u.id, u.email, u.name, u.login, u.birthday_date
                 FROM users as u
                 INNER JOIN friends as f1 ON u.id = f1.friend_id
                                          AND f1.user_id = ?
@@ -125,5 +125,4 @@ public class UserDbStorage implements UserStorage {
                 """;
         return jdbc.query(query, userRowMapper, userId1, userId2);
     }
-
 }

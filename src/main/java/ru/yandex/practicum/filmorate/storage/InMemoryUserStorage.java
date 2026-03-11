@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.*;
 
 @Slf4j
-@Repository("OldStorage")
+@Repository("OldUserStorage")
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
 
