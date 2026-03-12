@@ -9,10 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.mappers.GenreRowMapper;
-import ru.yandex.practicum.filmorate.mappers.RatingRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
 
 import javax.sql.DataSource;
 import java.sql.Date;
@@ -25,22 +23,31 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
     private final FilmRowMapper filmRowMapper;
     private final GenreRowMapper genreRowMapper;
-    private final RatingRowMapper ratingRowMapper;
 
     public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper,
-                         GenreRowMapper genreRowMapper, RatingRowMapper ratingRowMapper) {
+                         GenreRowMapper genreRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.filmRowMapper = filmRowMapper;
         this.genreRowMapper = genreRowMapper;
-        this.ratingRowMapper = ratingRowMapper;
     }
 
     @Override
     public Optional<Film> findById(Long id) {
-        String query = "SELECT id, name, description, release_date, duration FROM films WHERE id = ?";
+        String query = """
+               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+               FROM films as f
+               LEFT JOIN film_rating as fr ON f.id = fr.film_id
+               LEFT JOIN ratings as r ON r.id = fr.rating_id
+               WHERE f.id = ?
+               """;
 
         try {
             Film film = jdbc.queryForObject(query, filmRowMapper, id);
+
+            if (film != null) {
+                film.setGenres(getGenresForFilmId(id));
+            }
+
             return Optional.ofNullable(film);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -49,9 +56,19 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getFilms() {
-        String query = "SELECT id, name, description, release_date, duration FROM films ORDER BY id";
+        String query = """
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+                FROM films as f
+                LEFT JOIN film_rating as fr ON f.id = fr.film_id
+                LEFT JOIN ratings as r ON r.id = fr.rating_id
+                ORDER BY f.id
+                """;
 
         List<Film> films = jdbc.query(query, filmRowMapper);
+
+        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
+
         return films;
     }
 
@@ -107,6 +124,9 @@ public class FilmDbStorage implements FilmStorage {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
         }
 
+        Set<Genre> genres = getGenresForFilmId(film.getId());
+        film.setGenres(genres);
+
         return film;
     }
 
@@ -117,6 +137,8 @@ public class FilmDbStorage implements FilmStorage {
 
         Film film = findById(filmId).get();
         film.addLike(userId);
+
+        film.setGenres(getGenresForFilmId(filmId));
 
         return film;
     }
@@ -129,24 +151,34 @@ public class FilmDbStorage implements FilmStorage {
         Film film = findById(filmId).get();
         film.deleteLike(userId);
 
+        film.setGenres(getGenresForFilmId(filmId));
+
         return film;
     }
 
     @Override
     public List<Film> getMostLikedFilms(int count) {
         String query = """
-                SELECT f.id, f.name, f.description, f.release_date, f.duration
-                FROM films as f
-                LEFT JOIN (SELECT film_id, count(*) as cnt_likes
-                            FROM likes
-                            GROUP BY film_id) as t ON f.id = t.film_id
-                ORDER BY t.cnt_likes DESC
-                LIMIT ?
+               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+               FROM films as f
+               LEFT JOIN (SELECT film_id, count(*) as cnt_likes
+                           FROM likes
+                           GROUP BY film_id) as t ON f.id = t.film_id
+               LEFT JOIN film_rating as fr ON f.id = fr.film_id
+               LEFT JOIN ratings as r ON r.id = fr.rating_id
+               ORDER BY t.cnt_likes DESC
+               LIMIT ?
                """;
-        return jdbc.query(query, filmRowMapper, count);
+
+        List<Film> films = jdbc.query(query, filmRowMapper, count);
+
+        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
+
+        return films;
     }
 
-    public Set<Genre> getGenresForFilmId(Long id) {
+    private Set<Genre> getGenresForFilmId(Long id) {
         String query = """
                 SELECT g.id, g.name
                 FROM film_genres as fg
@@ -156,7 +188,7 @@ public class FilmDbStorage implements FilmStorage {
         return new HashSet<>(jdbc.query(query, genreRowMapper, id));
     }
 
-    public Map<Long, Set<Genre>> getGenresForAllFilms() {
+    private Map<Long, Set<Genre>> getGenresForAllFilms() {
         String query = """
                 SELECT fg.film_id, g.id as genre_id, g.name
                 FROM film_genres as fg
@@ -176,42 +208,5 @@ public class FilmDbStorage implements FilmStorage {
         });
 
         return filmsGenres;
-    }
-
-    public Optional<Rating> getRatingForFilmId(Long id) {
-        String query = """
-                SELECT r.id, r.name
-                FROM film_rating as fr
-                INNER JOIN ratings as r ON fr.rating_id = r.id
-                WHERE fr.film_id = ?
-                """;
-
-        try {
-            Rating rating = jdbc.queryForObject(query, ratingRowMapper, id);
-            return Optional.ofNullable(rating);
-        } catch (EmptyResultDataAccessException e) {
-            return Optional.empty();
-        }
-    }
-
-    public Map<Long, Rating> getRatingForAllFilms() {
-        String query = """
-                SELECT fr.film_id, r.id as rating_id, r.name
-                FROM film_rating as fr
-                INNER JOIN ratings as r ON fr.rating_id = r.id
-                """;
-        Map<Long, Rating> filmsRating = new HashMap<>();
-
-        jdbc.query(query, (rs) -> {
-            Long filmId = rs.getLong("film_id");
-
-            Rating rating = new Rating();
-            rating.setId(rs.getLong("rating_id"));
-            rating.setName(rs.getString("name"));
-
-            filmsRating.put(filmId, rating);
-        });
-
-        return filmsRating;
     }
 }

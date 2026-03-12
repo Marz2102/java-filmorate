@@ -40,29 +40,15 @@ public class FilmService {
     }
 
     public FilmDto getFilmById(Long id) {
-        Film film = filmStorage.findById(id)
-                .orElseThrow(() -> new NotFoundException("Фильм с id - " + id + " не найден"));
-
-        Set<Genre> genreIds = filmStorage.getGenresForFilmId(id);
-        film.setGenres(genreIds);
-
-        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(id);
-        Rating rating = optionalRating.orElse(null);
-        film.setMpa(rating);
-
-        return FilmMapper.mapToFilmDto(film);
+        return FilmMapper.mapToFilmDto(filmStorage.findById(id)
+                .orElseThrow(() -> new NotFoundException("Фильм с id - " + id + " не найден")));
     }
 
     public List<FilmDto> getFilms() {
-        List<Film> films = filmStorage.getFilms();
-
-        Map<Long, Set<Genre>> allGenres = filmStorage.getGenresForAllFilms();
-        films.forEach(film -> film.setGenres(allGenres.get(film.getId())));
-
-        Map<Long, Rating> allRatings = filmStorage.getRatingForAllFilms();
-        films.forEach(film -> film.setMpa(allRatings.get(film.getId())));
-
-        return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+        return filmStorage.getFilms()
+                .stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 
     public FilmDto addFilm(FilmCreateDto filmCreateDto) {
@@ -80,8 +66,10 @@ public class FilmService {
                 .collect(Collectors.toSet());
         film.setGenres(genres);
 
-        Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmCreateDto.getRatingId()));
-        film.setMpa(rating);
+        if (filmCreateDto.getRatingId() != null) {
+            Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmCreateDto.getRatingId()));
+            film.setMpa(rating);
+        }
 
         film = filmStorage.addFilm(film);
 
@@ -97,45 +85,22 @@ public class FilmService {
                 .map(film -> FilmMapper.updateFilmField(filmUpdateDto, film))
                 .orElseThrow(() -> new NotFoundException("Фильм с id - " + filmUpdateDto.getId() + " не найден"));
 
-        Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmUpdateDto.getRatingId()));
-        updatedFilm.setMpa(rating);
+        if (filmUpdateDto.getRatingId() != null) {
+            Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmUpdateDto.getRatingId()));
+            updatedFilm.setMpa(rating);
+        }
 
-        updatedFilm = filmStorage.updateFilm(updatedFilm);
-
-        Set<Genre> genreIds = filmStorage.getGenresForFilmId(updatedFilm.getId());
-        updatedFilm.setGenres(genreIds);
-
-        return FilmMapper.mapToFilmDto(updatedFilm);
+        return FilmMapper.mapToFilmDto(filmStorage.updateFilm(updatedFilm));
     }
 
     public FilmDto addLike(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
-
-        Film film = filmStorage.addLike(filmId, userId);
-
-        Set<Genre> genreIds = filmStorage.getGenresForFilmId(filmId);
-        film.setGenres(genreIds);
-
-        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(filmId);
-        Rating rating = optionalRating.orElse(null);
-        film.setMpa(rating);
-
-        return FilmMapper.mapToFilmDto(film);
+        return FilmMapper.mapToFilmDto(filmStorage.addLike(filmId, userId));
     }
 
     public FilmDto deleteLike(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
-
-        Film film = filmStorage.deleteLike(filmId, userId);
-
-        Set<Genre> genreIds = filmStorage.getGenresForFilmId(filmId);
-        film.setGenres(genreIds);
-
-        Optional<Rating> optionalRating = filmStorage.getRatingForFilmId(filmId);
-        Rating rating = optionalRating.orElse(null);
-        film.setMpa(rating);
-
-        return FilmMapper.mapToFilmDto(film);
+        return FilmMapper.mapToFilmDto(filmStorage.deleteLike(filmId, userId));
     }
 
     public List<FilmDto> getMostLikedFilms(int count) {
@@ -144,15 +109,10 @@ public class FilmService {
             throw new ValidationException("Укажите положительный параметр count");
         }
 
-        List<Film> films = filmStorage.getMostLikedFilms(count);
-
-        Map<Long, Set<Genre>> allGenres = filmStorage.getGenresForAllFilms();
-        films.forEach(film -> film.setGenres(allGenres.get(film.getId())));
-
-        Map<Long, Rating> allRatings = filmStorage.getRatingForAllFilms();
-        films.forEach(film -> film.setMpa(allRatings.get(film.getId())));
-
-        return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+        return filmStorage.getMostLikedFilms(count)
+                .stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 
     public GenreDto getGenreById(Long id) {

@@ -36,16 +36,8 @@ public class UserService {
 
     public UserDto addUser(UserCreateDto userCreateDto) {
         log.info("Валидация запроса прошла успешно");
-
-        System.out.println("EMAIL: " + userCreateDto.getEmail());
-        System.out.println("LOGIN: " + userCreateDto.getLogin());
-        System.out.println("NAME: " + userCreateDto.getName());
-
         User user = userStorage.addUser(UserMapper.mapUserCreateDtoToUser(userCreateDto));
 
-        System.out.println("EMAIL: " + userCreateDto.getEmail());
-        System.out.println("LOGIN: " + userCreateDto.getLogin());
-        System.out.println("NAME: " + userCreateDto.getName());
         return UserMapper.mapToUserDto(user);
     }
 

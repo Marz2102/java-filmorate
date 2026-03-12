@@ -40,7 +40,9 @@ public final class FilmMapper {
                 .toList();
         filmDto.setGenres(genres);
 
-        filmDto.setMpa(RatingMapper.mapToRatingDto(film.getMpa()));
+        if (film.getMpa() != null) {
+            filmDto.setMpa(RatingMapper.mapToRatingDto(film.getMpa()));
+        }
 
         return filmDto;
     }
