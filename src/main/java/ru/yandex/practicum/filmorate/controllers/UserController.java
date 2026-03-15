@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.services.UserService;
+import ru.yandex.practicum.filmorate.userDto.UserCreateDto;
+import ru.yandex.practicum.filmorate.userDto.UserDto;
+import ru.yandex.practicum.filmorate.userDto.UserUpdateDto;
 
 import java.util.List;
 
@@ -21,19 +23,19 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         log.info("Вызван эндпоинт на получение пользователя по id");
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getUsers() {
+    public ResponseEntity<List<UserDto>> getUsers() {
         log.info("Вызван эндпоинт на получение всех пользователей");
         return ResponseEntity.ok(userService.getUsers());
     }
 
     @PostMapping
-    public ResponseEntity<User> addUser(@Valid @RequestBody User user) {
+    public ResponseEntity<UserDto> addUser(@Valid @RequestBody UserCreateDto user) {
         log.info("Вызван эндпоинт на создание нового пользователя");
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -41,31 +43,31 @@ public class UserController {
     }
 
     @PutMapping
-    public ResponseEntity<User> updateUser(@Valid @RequestBody User user) {
+    public ResponseEntity<UserDto> updateUser(@Valid @RequestBody UserUpdateDto user) {
         log.info("Вызван эндпоинт на обновление данных пользователя");
         return ResponseEntity.ok(userService.updateUser(user));
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<UserDto> addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Вызван эндпоинт на добавление друга");
         return ResponseEntity.ok(userService.addFriend(id, friendId));
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public ResponseEntity<User> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public ResponseEntity<UserDto> deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Вызван эндпоинт на удаление друга");
         return ResponseEntity.ok(userService.deleteFriend(id, friendId));
     }
 
     @GetMapping("/{id}/friends")
-    public ResponseEntity<List<User>> getFriends(@PathVariable Long id) {
+    public ResponseEntity<List<UserDto>> getFriends(@PathVariable Long id) {
         log.info("Вызван эндпоинт на получение списка всех друзей");
         return ResponseEntity.ok(userService.getFriends(id));
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public ResponseEntity<List<User>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+    public ResponseEntity<List<UserDto>> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         log.info("Вызван эндпоинт на получение списка общих друзей у двух пользователей");
         return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }

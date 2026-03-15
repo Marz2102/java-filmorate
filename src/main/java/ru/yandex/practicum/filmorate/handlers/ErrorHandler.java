@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 
@@ -45,7 +46,15 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleInternalServerException(final Exception e) {
-        return new ErrorResponse("Ошибка сервера", e.getMessage());
+        StringBuilder error = new StringBuilder();
+
+        if (e instanceof ResponseStatusException) {
+            error.append("Ошибка сохранения данных в базу");
+        } else {
+            error.append("Ошибка сервера");
+        }
+
+        return new ErrorResponse(error.toString(), e.getMessage());
     }
 
 }

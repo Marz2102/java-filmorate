@@ -1,11 +1,15 @@
 package ru.yandex.practicum.filmorate.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.userDto.UserCreateDto;
+import ru.yandex.practicum.filmorate.userDto.UserDto;
+import ru.yandex.practicum.filmorate.userDto.UserUpdateDto;
 
 import java.util.List;
 
@@ -14,95 +18,86 @@ import java.util.List;
 public class UserService {
     private final UserStorage userStorage;
 
-    public UserService(final UserStorage userStorage) {
+    public UserService(@Qualifier("UserDao") final UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
-    public User getUserById(Long id) {
-        checkToFindById(id);
-        return userStorage.findById(id).get();
+    public UserDto getUserById(Long id) {
+        return userStorage.findById(id)
+                .map(UserMapper::mapToUserDto)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id - " + id + " не найден"));
     }
 
-    public List<User> getUsers() {
-        return userStorage.getUsers();
+    public List<UserDto> getUsers() {
+        return userStorage.getUsers().stream()
+                .map(UserMapper::mapToUserDto)
+                .toList();
     }
 
-    public User addUser(final User user) {
-        if (user.getName() == null || user.getName().isEmpty()) {
-            user.setName(user.getLogin());
-            log.debug("Имя пусто, используется логин - {}", user.getName());
-        }
+    public UserDto addUser(UserCreateDto userCreateDto) {
+        log.info("Валидация запроса прошла успешно");
+        User user = userStorage.addUser(UserMapper.mapUserCreateDtoToUser(userCreateDto));
 
-        return userStorage.addUser(user);
+        return UserMapper.mapToUserDto(user);
     }
 
-    public User updateUser(final User user) {
-        validateRequestBody(user);
+    public UserDto updateUser(UserUpdateDto userUpdateDto) {
         log.info("Валидация запроса прошла успешно");
 
-        checkToFindById(user.getId());
-        User oldUser = userStorage.findById(user.getId()).get();
+        User updatedUser = userStorage.findById(userUpdateDto.getId())
+                .map(user -> UserMapper.updateUserField(userUpdateDto, user))
+                .orElseThrow(() -> new NotFoundException("Пользователь с id - " + userUpdateDto.getId() + " не найден"));
 
-        if (user.getName() != null && !user.getName().isEmpty()) {
-            oldUser.setName(user.getName());
-            log.debug("Обновили имя пользователя - {}", oldUser.getName());
-        }
-
-        if (user.getBirthday() != null) {
-            oldUser.setBirthday(user.getBirthday());
-            log.debug("Обновили дату рождения пользователя - {}", oldUser.getBirthday());
-        }
-
-        if (user.getEmail() != null) {
-            oldUser.setEmail(user.getEmail());
-            log.debug("Обновили почту пользователя - {}", oldUser.getEmail());
-        }
-
-        if (user.getLogin() != null) {
-            oldUser.setLogin(user.getLogin());
-            log.debug("Обновили логин пользователя - {}", oldUser.getLogin());
-        }
-
-        return userStorage.updateUser(oldUser);
+        updatedUser = userStorage.updateUser(updatedUser);
+        return UserMapper.mapToUserDto(updatedUser);
     }
 
-    public User addFriend(Long id, Long friendId) {
-        checkToFindById(id);
-        checkToFindById(friendId);
+    public UserDto addFriend(Long id, Long friendId) {
+        checkToFindByIds(id, friendId);
 
-        return userStorage.addFriend(id, friendId);
+        User friend = userStorage.addFriend(id, friendId);
+        return UserMapper.mapToUserDto(friend);
     }
 
-    public User deleteFriend(Long id, Long friendId) {
-        checkToFindById(id);
-        checkToFindById(friendId);
+    public UserDto deleteFriend(Long id, Long friendId) {
+        checkToFindByIds(id, friendId);
 
-        return userStorage.deleteFriend(id, friendId);
+        User friend = userStorage.deleteFriend(id, friendId);
+        return UserMapper.mapToUserDto(friend);
     }
 
-    public List<User> getFriends(Long id) {
+    public List<UserDto> getFriends(Long id) {
         checkToFindById(id);
-        return userStorage.getFriends(id);
+
+        return userStorage.getFriends(id).stream()
+                .map(UserMapper::mapToUserDto)
+                .toList();
     }
 
-    public List<User> getCommonFriends(Long id, Long otherId) {
-        checkToFindById(id);
-        checkToFindById(otherId);
+    public List<UserDto> getCommonFriends(Long id, Long otherId) {
+        checkToFindByIds(id, otherId);
 
-        return userStorage.getCommonFriends(id, otherId);
+        return userStorage.getCommonFriends(id, otherId).stream()
+                .map(UserMapper::mapToUserDto)
+                .toList();
+    }
+
+    private void checkToFindByIds(Long id, Long friendId) {
+        if (userStorage.findById(id).isEmpty()) {
+            log.info("Не найдено пользователя с указанным id - {}", id);
+            throw new NotFoundException("Пользователь с id - " + id + " не найден");
+        }
+
+        if (userStorage.findById(friendId).isEmpty()) {
+            log.info("Не найдено пользователя с указанным id - {}", friendId);
+            throw new NotFoundException("Пользователь с id - " + friendId + " не найден");
+        }
     }
 
     private void checkToFindById(Long id) {
         if (userStorage.findById(id).isEmpty()) {
             log.info("Не найдено пользователя с указанным id - {}", id);
             throw new NotFoundException("Пользователь с id - " + id + " не найден");
-        }
-    }
-
-    private void validateRequestBody(User user) {
-        if (user.getId() == null) {
-            log.warn("Отсутствует id");
-            throw new ValidationException("Отсутствует id");
         }
     }
 }
