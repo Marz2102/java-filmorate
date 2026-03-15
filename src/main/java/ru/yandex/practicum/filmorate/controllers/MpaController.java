@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.ratingDto.RatingDto;
+import ru.yandex.practicum.filmorate.mpaDto.MpaDto;
 import ru.yandex.practicum.filmorate.services.FilmService;
 
 import java.util.List;
@@ -22,14 +22,14 @@ public class MpaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RatingDto> getRatingById(@PathVariable("id") Long id) {
+    public ResponseEntity<MpaDto> getMpaById(@PathVariable("id") Long id) {
         log.info("Вызван эндпоинт на получение рейтинга по id");
-        return ResponseEntity.ok(filmService.getRatingById(id));
+        return ResponseEntity.ok(filmService.getMpaById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<RatingDto>> getRatings() {
+    public ResponseEntity<List<MpaDto>> getAllMpa() {
         log.info("Вызван эндпоинт на получение всех рейтингов");
-        return ResponseEntity.ok(filmService.getRatings());
+        return ResponseEntity.ok(filmService.getAllMpa());
     }
 }

@@ -11,11 +11,11 @@ import ru.yandex.practicum.filmorate.filmDto.FilmUpdateDto;
 import ru.yandex.practicum.filmorate.genreDto.GenreDto;
 import ru.yandex.practicum.filmorate.mappers.FilmMapper;
 import ru.yandex.practicum.filmorate.mappers.GenreMapper;
-import ru.yandex.practicum.filmorate.mappers.RatingMapper;
+import ru.yandex.practicum.filmorate.mappers.MpaMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
-import ru.yandex.practicum.filmorate.ratingDto.RatingDto;
+import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.mpaDto.MpaDto;
 import ru.yandex.practicum.filmorate.storage.*;
 
 import java.time.LocalDate;
@@ -28,15 +28,15 @@ public class FilmService {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
-    private final RatingStorage ratingStorage;
+    private final MpaStorage mpaStorage;
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
 
     public FilmService(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final FilmStorage filmStorage,
-                       @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("RatingDao") final RatingStorage ratingStorage) {
+                       @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("MpaDao") final MpaStorage mpaStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
-        this.ratingStorage = ratingStorage;
+        this.mpaStorage = mpaStorage;
     }
 
     public FilmDto getFilmById(Long id) {
@@ -54,7 +54,7 @@ public class FilmService {
     public FilmDto addFilm(FilmCreateDto filmCreateDto) {
         checkReleaseDate(filmCreateDto.getReleaseDate());
         checkGenresId(filmCreateDto.getGenreIds());
-        checkRatingId(filmCreateDto.getRatingId());
+        checkMpaId(filmCreateDto.getMpaId());
         log.info("Валидация запроса прошла успешно");
 
         Film film = FilmMapper.mapFilmCreateDtoToFilm(filmCreateDto);
@@ -66,9 +66,9 @@ public class FilmService {
                 .collect(Collectors.toSet());
         film.setGenres(genres);
 
-        if (filmCreateDto.getRatingId() != null) {
-            Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmCreateDto.getRatingId()));
-            film.setMpa(rating);
+        if (filmCreateDto.getMpaId() != null) {
+            Mpa mpa = MpaMapper.mapMpaDtoToMpa(getMpaById(filmCreateDto.getMpaId()));
+            film.setMpa(mpa);
         }
 
         film = filmStorage.addFilm(film);
@@ -78,17 +78,11 @@ public class FilmService {
 
     public FilmDto updateFilm(FilmUpdateDto filmUpdateDto) {
         checkReleaseDate(filmUpdateDto.getReleaseDate());
-        checkRatingId(filmUpdateDto.getRatingId());
         log.info("Валидация запроса прошла успешно");
 
         Film updatedFilm = filmStorage.findById(filmUpdateDto.getId())
                 .map(film -> FilmMapper.updateFilmField(filmUpdateDto, film))
                 .orElseThrow(() -> new NotFoundException("Фильм с id - " + filmUpdateDto.getId() + " не найден"));
-
-        if (filmUpdateDto.getRatingId() != null) {
-            Rating rating = RatingMapper.mapRatingDtoToRating(getRatingById(filmUpdateDto.getRatingId()));
-            updatedFilm.setMpa(rating);
-        }
 
         return FilmMapper.mapToFilmDto(filmStorage.updateFilm(updatedFilm));
     }
@@ -127,15 +121,15 @@ public class FilmService {
                 .toList();
     }
 
-    public RatingDto getRatingById(Long id) {
-        return ratingStorage.findById(id)
-                .map(RatingMapper::mapToRatingDto)
+    public MpaDto getMpaById(Long id) {
+        return mpaStorage.findById(id)
+                .map(MpaMapper::mapToMpaDto)
                 .orElseThrow(() -> new NotFoundException("Рейтинг с id - " + id + " не найден"));
     }
 
-    public List<RatingDto> getRatings() {
-        return ratingStorage.getRatings().stream()
-                .map(RatingMapper::mapToRatingDto)
+    public List<MpaDto> getAllMpa() {
+        return mpaStorage.getAllMpa().stream()
+                .map(MpaMapper::mapToMpaDto)
                 .toList();
     }
 
@@ -178,19 +172,19 @@ public class FilmService {
         }
     }
 
-    private void checkRatingId(Long ratingId) {
-        if (ratingId == null) {
+    private void checkMpaId(Long id) {
+        if (id == null) {
             return;
         }
 
-        Set<Long> allValidIds = ratingStorage.getRatings()
+        Set<Long> allValidIds = mpaStorage.getAllMpa()
                 .stream()
-                .map(Rating::getId)
+                .map(Mpa::getId)
                 .collect(Collectors.toSet());
 
-        if (!allValidIds.contains(ratingId)) {
+        if (!allValidIds.contains(id)) {
             log.warn("Проблема с полем 'Рейтинг'");
-            throw new NotFoundException("Рейтинга с таким id не существует -" + ratingId);
+            throw new NotFoundException("Рейтинга с таким id не существует -" + id);
         }
     }
 }

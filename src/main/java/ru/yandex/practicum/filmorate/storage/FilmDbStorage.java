@@ -9,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.mappers.GenreRowMapper;
+import ru.yandex.practicum.filmorate.mappers.MpaRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import javax.sql.DataSource;
 import java.sql.Date;
@@ -23,18 +25,20 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbc;
     private final FilmRowMapper filmRowMapper;
     private final GenreRowMapper genreRowMapper;
+    private final MpaRowMapper mpaRowMapper;
 
     public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper,
-                         GenreRowMapper genreRowMapper) {
+                         GenreRowMapper genreRowMapper, MpaRowMapper mpaRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.filmRowMapper = filmRowMapper;
         this.genreRowMapper = genreRowMapper;
+        this.mpaRowMapper = mpaRowMapper;
     }
 
     @Override
     public Optional<Film> findById(Long id) {
         String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                FROM films as f
                LEFT JOIN film_rating as fr ON f.id = fr.film_id
                LEFT JOIN ratings as r ON r.id = fr.rating_id
@@ -57,7 +61,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getFilms() {
         String query = """
-                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                 FROM films as f
                 LEFT JOIN film_rating as fr ON f.id = fr.film_id
                 LEFT JOIN ratings as r ON r.id = fr.rating_id
@@ -94,7 +98,7 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         String queryForGenres = "MERGE INTO film_genres (film_id, genre_id) VALUES (?, ?) ";
-        String queryForRating = "MERGE INTO film_rating (film_id, rating_id) VALUES (?, ?) ";
+        String queryForMpa = "MERGE INTO film_rating (film_id, rating_id) VALUES (?, ?) ";
 
         if (film.getGenres() != null) {
             film.getGenres()
@@ -104,7 +108,7 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         if (film.getMpa() != null) {
-            jdbc.update(queryForRating, id, film.getMpa().getId());
+            jdbc.update(queryForMpa, id, film.getMpa().getId());
         }
 
         return film;
@@ -126,6 +130,9 @@ public class FilmDbStorage implements FilmStorage {
 
         Set<Genre> genres = getGenresForFilmId(film.getId());
         film.setGenres(genres);
+
+        Mpa mpa = getMpaForFilmId(film.getId()).orElse(null);
+        film.setMpa(mpa);
 
         return film;
     }
@@ -159,7 +166,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getMostLikedFilms(int count) {
         String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as rating_id, r.name as rating_name
+               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                FROM films as f
                LEFT JOIN (SELECT film_id, count(*) as cnt_likes
                            FROM likes
@@ -208,5 +215,21 @@ public class FilmDbStorage implements FilmStorage {
         });
 
         return filmsGenres;
+    }
+
+    private Optional<Mpa> getMpaForFilmId(Long id) {
+        String query = """
+                SELECT r.id, r.name
+                FROM film_rating as fr
+                INNER JOIN ratings as r ON r.id = fr.rating_id
+                WHERE fr.film_id = ?
+                """;
+
+        try {
+            Mpa mpa = jdbc.queryForObject(query, mpaRowMapper, id);
+            return Optional.ofNullable(mpa);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }

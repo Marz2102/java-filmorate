@@ -32,7 +32,7 @@ public class Film {
 
     private Set<Long> likedUsers = new HashSet<>();
 
-    private Rating mpa;
+    private Mpa mpa;
 
     public void addLike(Long id) {
         likedUsers.add(id);

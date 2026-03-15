@@ -27,14 +27,4 @@ public class FilmUpdateDto {
 
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
-
-    private FilmMpaDto mpa;
-
-    public Long getRatingId() {
-        if (mpa == null) {
-            return null;
-        }
-
-        return mpa.getId();
-    }
 }

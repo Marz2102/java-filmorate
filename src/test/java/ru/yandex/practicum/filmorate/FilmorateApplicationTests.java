@@ -9,11 +9,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
-import ru.yandex.practicum.filmorate.storage.RatingStorage;
+import ru.yandex.practicum.filmorate.storage.MpaStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
@@ -31,15 +31,15 @@ class FilmorateApplicationTests {
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
-    private final RatingStorage ratingStorage;
+    private final MpaStorage mpaStorage;
 
     @Autowired
     FilmorateApplicationTests(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final  FilmStorage filmStorage,
-                              @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("RatingDao") final RatingStorage ratingStorage) {
+                              @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("MpaDao") final MpaStorage mpaStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
-        this.ratingStorage = ratingStorage;
+        this.mpaStorage = mpaStorage;
     }
 
     @BeforeEach
@@ -59,7 +59,7 @@ class FilmorateApplicationTests {
         film.setReleaseDate(LocalDate.of(1990, 12, 12));
         film.setGenres(new HashSet<>(List.of(new Genre(1L, "Комедия"),
                 new Genre(3L, "Мультфильм"))));
-        film.setMpa(new Rating(1L, "G"));
+        film.setMpa(new Mpa(1L, "G"));
 
         userStorage.addUser(user);
         filmStorage.addFilm(film);
@@ -207,8 +207,8 @@ class FilmorateApplicationTests {
         film.setDuration(100);
         film.setReleaseDate(LocalDate.of(1990, 12, 12));
 
-        user = userStorage.addUser(user);
-        film = filmStorage.addFilm(film);
+        userStorage.addUser(user);
+        filmStorage.addFilm(film);
 
         System.out.println(filmStorage.getFilms());
 
@@ -234,9 +234,9 @@ class FilmorateApplicationTests {
     }
 
     @Test
-    public void testGetRatings() {
-        assertEquals(5, ratingStorage.getRatings().size());
-        assertEquals("PG-13", ratingStorage.findById(3L).get().getName());
+    public void testGetAllMpa() {
+        assertEquals(5, mpaStorage.getAllMpa().size());
+        assertEquals("PG-13", mpaStorage.findById(3L).get().getName());
     }
 }
 

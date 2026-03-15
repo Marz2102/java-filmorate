@@ -40,7 +40,7 @@ public class FilmCreateDto {
                 .collect(Collectors.toSet());
     }
 
-    public Long getRatingId() {
+    public Long getMpaId() {
         if (mpa == null) {
             return null;
         }

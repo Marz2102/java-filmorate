@@ -4,38 +4,38 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.filmorate.mappers.RatingRowMapper;
-import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.mappers.MpaRowMapper;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
 @Transactional
-@Repository("RatingDao")
-public class RatingDbStorage implements RatingStorage {
+@Repository("MpaDao")
+public class MpaDbStorage implements MpaStorage {
     private final JdbcTemplate jdbc;
-    private final RatingRowMapper ratingRowMapper;
+    private final MpaRowMapper mpaRowMapper;
 
-    public RatingDbStorage(DataSource dataSource, RatingRowMapper ratingRowMapper) {
+    public MpaDbStorage(DataSource dataSource, MpaRowMapper mpaRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
-        this.ratingRowMapper = ratingRowMapper;
+        this.mpaRowMapper = mpaRowMapper;
     }
 
     @Override
-    public Optional<Rating> findById(Long id) {
+    public Optional<Mpa> findById(Long id) {
         String query = "SELECT id, name FROM ratings WHERE id = ?";
 
         try {
-            Rating rating = jdbc.queryForObject(query, ratingRowMapper, id);
-            return Optional.ofNullable(rating);
+            Mpa mpa = jdbc.queryForObject(query, mpaRowMapper, id);
+            return Optional.ofNullable(mpa);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
-    public List<Rating> getRatings() {
+    public List<Mpa> getAllMpa() {
         String query = "SELECT id, name FROM ratings ORDER BY id DESC";
-        return jdbc.query(query, ratingRowMapper);
+        return jdbc.query(query, mpaRowMapper);
     }
 }
