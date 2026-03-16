@@ -3,10 +3,15 @@ package ru.yandex.practicum.filmorate.mappers;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.userDto.FriendDto;
 import ru.yandex.practicum.filmorate.userDto.UserCreateDto;
 import ru.yandex.practicum.filmorate.userDto.UserDto;
 import ru.yandex.practicum.filmorate.userDto.UserUpdateDto;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -36,7 +41,29 @@ public final class UserMapper {
         userDto.setLogin(user.getLogin());
         userDto.setBirthday(user.getBirthday());
 
+        if (user.getFriends() != null) {
+            Map<FriendDto, FriendshipStatus> friends = user.getFriends().entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                        f -> mapToFriendDto(f.getKey()),
+                        Map.Entry::getValue
+                    ));
+
+            userDto.setFriends(friends);
+        }
+
         return userDto;
+    }
+
+    public static FriendDto mapToFriendDto(User user) {
+        FriendDto friendDto = new FriendDto();
+        friendDto.setId(user.getId());
+        friendDto.setEmail(user.getEmail());
+        friendDto.setName(user.getName());
+        friendDto.setLogin(user.getLogin());
+        friendDto.setBirthday(user.getBirthday());
+
+        return friendDto;
     }
 
     public static User updateUserField(UserUpdateDto userUpdateDto, User user) {

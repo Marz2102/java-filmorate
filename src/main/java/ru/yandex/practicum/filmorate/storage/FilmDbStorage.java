@@ -10,13 +10,14 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.mappers.MpaRowMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.userDto.LikesDto;
 
 import javax.sql.DataSource;
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Transactional
@@ -40,8 +41,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                FROM films as f
-               LEFT JOIN film_rating as fr ON f.id = fr.film_id
-               LEFT JOIN ratings as r ON r.id = fr.rating_id
+               LEFT JOIN ratings as r ON f.rating_id = r.id
                WHERE f.id = ?
                """;
 
@@ -50,6 +50,7 @@ public class FilmDbStorage implements FilmStorage {
 
             if (film != null) {
                 film.setGenres(getGenresForFilmId(id));
+                film.setLikes(getLikesForFilmId(id));
             }
 
             return Optional.ofNullable(film);
@@ -63,8 +64,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = """
                 SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                 FROM films as f
-                LEFT JOIN film_rating as fr ON f.id = fr.film_id
-                LEFT JOIN ratings as r ON r.id = fr.rating_id
+                LEFT JOIN ratings as r ON f.rating_id = r.id
                 ORDER BY f.id
                 """;
 
@@ -73,12 +73,15 @@ public class FilmDbStorage implements FilmStorage {
         Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
         films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
 
+        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
+        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
+
         return films;
     }
 
     @Override
     public Film addFilm(Film film) {
-        String query = "INSERT INTO films (name, description, release_date, duration) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO films (name, description, release_date, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
@@ -87,6 +90,13 @@ public class FilmDbStorage implements FilmStorage {
             ps.setString(2, film.getDescription());
             ps.setDate(3, Date.valueOf(film.getReleaseDate()));
             ps.setInt(4, film.getDuration());
+
+            if (film.getMpa() != null) {
+                ps.setLong(5, film.getMpa().getId());
+            } else {
+                ps.setNull(5, Types.BIGINT);
+            }
+
             return ps;
         }, keyHolder);
 
@@ -98,17 +108,12 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         String queryForGenres = "MERGE INTO film_genres (film_id, genre_id) VALUES (?, ?) ";
-        String queryForMpa = "MERGE INTO film_rating (film_id, rating_id) VALUES (?, ?) ";
 
         if (film.getGenres() != null) {
             film.getGenres()
                     .stream()
                     .map(Genre::getId)
                     .forEach(genre_id -> jdbc.update(queryForGenres, id, genre_id));
-        }
-
-        if (film.getMpa() != null) {
-            jdbc.update(queryForMpa, id, film.getMpa().getId());
         }
 
         return film;
@@ -128,11 +133,9 @@ public class FilmDbStorage implements FilmStorage {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
         }
 
-        Set<Genre> genres = getGenresForFilmId(film.getId());
-        film.setGenres(genres);
-
-        Mpa mpa = getMpaForFilmId(film.getId()).orElse(null);
-        film.setMpa(mpa);
+        film.setGenres(getGenresForFilmId(film.getId()));
+        film.setLikes(getLikesForFilmId(film.getId()));
+        film.setMpa(getMpaForFilmId(film.getId()).orElse(null));
 
         return film;
     }
@@ -142,12 +145,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = "MERGE INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(query, filmId, userId);
 
-        Film film = findById(filmId).get();
-        film.addLike(userId);
-
-        film.setGenres(getGenresForFilmId(filmId));
-
-        return film;
+        return findById(filmId).orElse(null);
     }
 
     @Override
@@ -155,12 +153,7 @@ public class FilmDbStorage implements FilmStorage {
         String query = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
         jdbc.update(query, filmId, userId);
 
-        Film film = findById(filmId).get();
-        film.deleteLike(userId);
-
-        film.setGenres(getGenresForFilmId(filmId));
-
-        return film;
+        return findById(filmId).orElse(null);
     }
 
     @Override
@@ -171,8 +164,7 @@ public class FilmDbStorage implements FilmStorage {
                LEFT JOIN (SELECT film_id, count(*) as cnt_likes
                            FROM likes
                            GROUP BY film_id) as t ON f.id = t.film_id
-               LEFT JOIN film_rating as fr ON f.id = fr.film_id
-               LEFT JOIN ratings as r ON r.id = fr.rating_id
+               LEFT JOIN ratings as r ON f.rating_id = r.id
                ORDER BY t.cnt_likes DESC
                LIMIT ?
                """;
@@ -181,6 +173,9 @@ public class FilmDbStorage implements FilmStorage {
 
         Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
         films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
+        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
 
         return films;
     }
@@ -220,9 +215,9 @@ public class FilmDbStorage implements FilmStorage {
     private Optional<Mpa> getMpaForFilmId(Long id) {
         String query = """
                 SELECT r.id, r.name
-                FROM film_rating as fr
-                INNER JOIN ratings as r ON r.id = fr.rating_id
-                WHERE fr.film_id = ?
+                FROM films as f
+                INNER JOIN ratings as r ON f.rating_id = r.id
+                WHERE r.id = ?
                 """;
 
         try {
@@ -231,5 +226,53 @@ public class FilmDbStorage implements FilmStorage {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    private Set<LikesDto> getLikesForFilmId(Long id) {
+        String query = """
+                SELECT u.id, u.email, u.login
+                FROM users as u
+                INNER JOIN likes as l ON u.id = l.user_id
+                INNER JOIN films as f ON f.id = l.film_id AND f.id = ?
+                """;
+
+        Set<LikesDto> likes = new HashSet<>();
+
+        jdbc.query(query, (rs) -> {
+            LikesDto likesDto = new LikesDto();
+            likesDto.setId(rs.getLong("id"));
+            likesDto.setEmail(rs.getString("email"));
+            likesDto.setLogin(rs.getString("login"));
+
+            likes.add(likesDto);
+        }, id);
+
+        return likes;
+    }
+
+    private Map<Long, Set<LikesDto>> getLikesForAllFilms() {
+        String query = """
+                SELECT f.id as film_id, u.id, u.email, u.login, l.created_at
+                FROM users as u
+                INNER JOIN likes as l ON u.id = l.user_id
+                INNER JOIN films as f ON f.id = l.film_id
+                """;
+
+        Map<Long, Set<LikesDto>> allLikes = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            Long filmId = rs.getLong("film_id");
+            Set<LikesDto> likes = allLikes.computeIfAbsent(filmId, k -> new HashSet<>());
+
+            LikesDto likesDto = new LikesDto();
+            likesDto.setId(rs.getLong("id"));
+            likesDto.setEmail(rs.getString("email"));
+            likesDto.setLogin(rs.getString("login"));
+            likesDto.setCreatedAt(rs.getObject("created_at", LocalDateTime.class));
+
+            likes.add(likesDto);
+        });
+
+        return allLikes;
     }
 }

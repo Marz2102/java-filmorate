@@ -7,6 +7,12 @@ drop table if exists genres cascade;
 drop table if exists film_genres cascade;
 drop table if exists ratings cascade;
 */
+CREATE TABLE IF NOT EXISTS ratings (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(100),
@@ -62,10 +68,4 @@ CREATE TABLE IF NOT EXISTS film_genres (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
     FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE RESTRICT
-);
-
-CREATE TABLE IF NOT EXISTS ratings (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
