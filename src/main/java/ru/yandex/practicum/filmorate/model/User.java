@@ -6,29 +6,19 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class User {
     private Long id;
-
-    @NotBlank
-    @Email(message = "Введите почту в корректном формате")
     private String email;
-
-    @NotEmpty(message = "Логин не может быть пустым")
-    @Pattern(regexp = "\\S+", message = "Логин должен состоять из одного слова, без пробелов")
     private String login;
-
     private String name;
-
-    @PastOrPresent(message = "Дата рождения не может быть позже сегодняшнего дня")
     private LocalDate birthday;
-
-    private Set<Long> friends = new HashSet<>();
+    private Map<User, FriendshipStatus> friends = new HashMap<>();
 
     public void addFriend(Long id) {
         this.friends.add(id);

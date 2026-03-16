@@ -8,13 +8,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.sql.DataSource;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Transactional
 @Repository("UserDao")
@@ -126,5 +126,66 @@ public class UserDbStorage implements UserStorage {
                                          AND f2.user_id = ?
                 """;
         return jdbc.query(query, userRowMapper, userId1, userId2);
+    }
+
+    private Map<Long, Map<User, FriendshipStatus>> getFriendsForAllUsers() {
+        String query = """
+                SELECT u.id, u1.id as friend_id, u1.email as friend_email, u1.name as friend_name,
+                       u1.login as friend_login, u1.birthday_date as friend_birthday_date, f.is_confirmed
+                FROM users as u
+                INNER JOIN friends as f ON u.id = f.user_id
+                INNER JOIN users as u1 ON u1.id = f.friend_id
+                
+                UNION ALL
+                
+                SELECT u.id, u1.id as friend_id, u1.email as friend_email, u1.name as friend_name,
+                       u1.login as friend_login, u1.birthday_date as friend_birthday_date, f.is_confirmed
+                FROM users as u
+                INNER JOIN friends as f ON u.id = f.friend_id AND f.is_confirmed IS TRUE
+                INNER JOIN users as u1 ON u1.id = f.user_id
+                """;
+
+        Map<Long, Map<User, FriendshipStatus>> allFriends = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            Long userId = rs.getLong("id");
+            Map<User, FriendshipStatus> friends = allFriends.computeIfAbsent(userId, k -> new HashMap<>());
+
+            User friend = new User();
+            friend.setId(rs.getLong("friend_id"));
+            friend.setEmail(rs.getString("friend_email"));
+            friend.setName(rs.getString("friend_name"));
+            friend.setLogin(rs.getString("friend_login"));
+            friend.setBirthday(rs.getDate("friend_birthday_date").toLocalDate());
+
+            friends.put(friend, rs.getBoolean(is_confirmed) ? FriendshipStatus.CONFIRMED : FriendshipStatus.NOT_CONFIRMED);
+        });
+
+        return allFriends;
+    }
+
+    private Map<User, FriendshipStatus> getFriendsForUserId(Long id) {
+        String query = """
+                SELECT u.id, u.email, u.name, u.login, u.birthday_date, f.is_confirmed
+                FROM users as u
+                INNER JOIN friends as f ON (u.id = f.friend_id AND f.user_id = ?)
+                OR (u.id = f.user_id AND f.friend_id = ? AND f.is_confirmed IS TRUE)
+                """;
+
+        Map<User, FriendshipStatus> friends = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            User friend = new User();
+
+            friend.setId(rs.getLong("id"));
+            friend.setEmail(rs.getString("email"));
+            friend.setName(rs.getString("name"));
+            friend.setLogin(rs.getString("login"));
+            friend.setBirthday(rs.getDate("birthday_date").toLocalDate());
+
+            friends.put(friend, rs.getBoolean(is_confirmed) ? FriendshipStatus.CONFIRMED : FriendshipStatus.NOT_CONFIRMED);
+        });
+
+        return friends;
     }
 }
