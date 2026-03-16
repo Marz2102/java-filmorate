@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.Exceptions.NotFoundException;
+import ru.yandex.practicum.filmorate.Exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -12,6 +13,7 @@ import ru.yandex.practicum.filmorate.userDto.UserDto;
 import ru.yandex.practicum.filmorate.userDto.UserUpdateDto;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -54,6 +56,10 @@ public class UserService {
 
     public UserDto addFriend(Long id, Long friendId) {
         checkToFindByIds(id, friendId);
+        if (id == friendId) {
+            log.info("Ошибка добавления друзей");
+            throw new ValidationException("Невозможно добавить себя в друзья");
+        }
 
         User friend = userStorage.addFriend(id, friendId);
         return UserMapper.mapToUserDto(friend);
@@ -61,6 +67,10 @@ public class UserService {
 
     public UserDto deleteFriend(Long id, Long friendId) {
         checkToFindByIds(id, friendId);
+        if (id == friendId) {
+            log.info("Ошибка удаления из друзей");
+            throw new ValidationException("Невозможно удалить себя из друзей");
+        }
 
         User friend = userStorage.deleteFriend(id, friendId);
         return UserMapper.mapToUserDto(friend);

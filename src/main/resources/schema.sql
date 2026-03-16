@@ -6,8 +6,13 @@ drop table if exists likes cascade;
 drop table if exists genres cascade;
 drop table if exists film_genres cascade;
 drop table if exists ratings cascade;
-drop table if exists film_rating cascade;
 */
+CREATE TABLE IF NOT EXISTS ratings (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(100),
@@ -24,6 +29,7 @@ CREATE TABLE IF NOT EXISTS films (
     description VARCHAR(200),
     release_date DATE,
     duration INT,
+    rating_id BIGINT REFERENCES ratings(id) ON DELETE RESTRICT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -31,7 +37,10 @@ CREATE TABLE IF NOT EXISTS films (
 CREATE TABLE IF NOT EXISTS friends (
     user_id BIGINT,
     friend_id BIGINT,
+    is_confirmed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CHECK (user_id <> friend_id),
     PRIMARY KEY (user_id, friend_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
@@ -60,18 +69,3 @@ CREATE TABLE IF NOT EXISTS film_genres (
     FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
     FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE RESTRICT
 );
-
-CREATE TABLE IF NOT EXISTS ratings (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS film_rating (
-    film_id BIGINT PRIMARY KEY,
-    rating_id BIGINT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
-    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE RESTRICT
-)
-

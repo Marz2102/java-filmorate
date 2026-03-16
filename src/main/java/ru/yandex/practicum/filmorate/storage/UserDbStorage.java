@@ -8,13 +8,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.sql.DataSource;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Transactional
 @Repository("UserDao")
@@ -32,6 +32,11 @@ public class UserDbStorage implements UserStorage {
         String query = "SELECT id, email, name, login, birthday_date FROM users WHERE id = ?";
         try {
             User user = jdbc.queryForObject(query, userRowMapper, id);
+
+            if (user != null) {
+                user.setFriends(getFriendsForUserId(user.getId()));
+            }
+
             return Optional.ofNullable(user);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -41,7 +46,13 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getUsers() {
         String query = "SELECT id, email, name, login, birthday_date FROM users";
-        return jdbc.query(query, userRowMapper);
+
+        List<User> users =  jdbc.query(query, userRowMapper);
+
+        Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
+        users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
+
+        return users;
     }
 
     @Override
@@ -58,7 +69,7 @@ public class UserDbStorage implements UserStorage {
             return ps;
         }, keyHolder);
 
-        Long id = (Long) keyHolder.getKeys().get("id");
+        Long id = (Long) Objects.requireNonNull(keyHolder.getKeys()).get("id");
         if (id != null) {
             user.setId(id);
         } else {
@@ -81,27 +92,77 @@ public class UserDbStorage implements UserStorage {
         if (rowsUpdated == 0) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
         }
+
+        user.setFriends(getFriendsForUserId(user.getId()));
+
         return user;
     }
 
     @Override
     public User addFriend(Long userId, Long friendId) {
-        String query = "MERGE INTO friends (user_id, friend_id) VALUES (?, ?)";
-        jdbc.update(query, userId, friendId);
+        String queryForReverseLink = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
+        String queryForDuplicate = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
 
-        User friend = findById(friendId).get();
-        friend.addFriend(userId);
-        return friend;
+        Long countReverseLink = jdbc.queryForObject(queryForReverseLink, Long.class, friendId, userId);
+        Long countDuplicate = jdbc.queryForObject(queryForDuplicate, Long.class, userId, friendId);
+
+        if (countReverseLink == null || countDuplicate == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка при выполнении запроса");
+        }
+
+        if (countDuplicate > 0) {
+            return findById(userId).orElse(null);
+        }
+
+        if (countReverseLink > 0) {
+            String queryUpdate = "UPDATE friends SET is_confirmed = TRUE WHERE user_id = ? AND friend_id = ?";
+            String queryInsert = "INSERT INTO friends (user_id, friend_id, is_confirmed) VALUES (?, ?, TRUE)";
+
+            int rowsUpdated = jdbc.update(queryUpdate, friendId, userId);
+
+            if (rowsUpdated == 0) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
+            }
+
+            jdbc.update(queryInsert, userId, friendId);
+
+        } else {
+            String query = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
+            jdbc.update(query, userId, friendId);
+        }
+
+        return findById(friendId).orElse(null);
     }
 
     @Override
     public User deleteFriend(Long userId, Long friendId) {
-        String query = "DELETE FROM friends WHERE user_id = ? and friend_id = ?";
-        jdbc.update(query, userId, friendId);
+        String queryForReverseLink = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
+        String queryForDuplicate = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
 
-        User friend = findById(friendId).get();
-        friend.deleteFriend(userId);
-        return friend;
+        Long countReverseLink = jdbc.queryForObject(queryForReverseLink, Long.class, friendId, userId);
+        Long countDuplicate = jdbc.queryForObject(queryForDuplicate, Long.class, userId, friendId);
+
+        if (countReverseLink == null || countDuplicate == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка при выполнении запроса");
+        }
+
+        if (countDuplicate == 0) {
+            return findById(userId).orElse(null);
+        }
+
+        String queryDelete = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
+        jdbc.update(queryDelete, userId, friendId);
+
+        if (countReverseLink > 0) {
+            String queryUpdate = "UPDATE friends SET is_confirmed = FALSE WHERE user_id = ? AND friend_id = ?";
+            int rowsUpdated = jdbc.update(queryUpdate, friendId, userId);
+
+            if (rowsUpdated == 0) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
+            }
+        }
+
+        return findById(friendId).orElse(null);
     }
 
     @Override
@@ -112,7 +173,13 @@ public class UserDbStorage implements UserStorage {
                 INNER JOIN users as u ON f.friend_id = u.id
                 WHERE f.user_id = ?
                 """;
-        return jdbc.query(query, userRowMapper, userId);
+
+        List<User> users =  jdbc.query(query, userRowMapper, userId);
+
+        Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
+        users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
+
+        return users;
     }
 
     @Override
@@ -125,6 +192,64 @@ public class UserDbStorage implements UserStorage {
                 INNER JOIN friends as f2 ON u.id = f2.friend_id
                                          AND f2.user_id = ?
                 """;
-        return jdbc.query(query, userRowMapper, userId1, userId2);
+
+        List<User> users =  jdbc.query(query, userRowMapper, userId1, userId2);
+
+        Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
+        users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
+
+        return users;
+    }
+
+    private Map<Long, Map<User, FriendshipStatus>> getFriendsForAllUsers() {
+        String query = """
+                SELECT u.id, u1.id as friend_id, u1.email as friend_email, u1.name as friend_name,
+                       u1.login as friend_login, u1.birthday_date as friend_birthday_date, f.is_confirmed
+                FROM users as u
+                INNER JOIN friends as f ON u.id = f.user_id
+                INNER JOIN users as u1 ON u1.id = f.friend_id
+                """;
+
+        Map<Long, Map<User, FriendshipStatus>> allFriends = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            Long userId = rs.getLong("id");
+            Map<User, FriendshipStatus> friends = allFriends.computeIfAbsent(userId, k -> new HashMap<>());
+
+            User friend = new User();
+            friend.setId(rs.getLong("friend_id"));
+            friend.setEmail(rs.getString("friend_email"));
+            friend.setName(rs.getString("friend_name"));
+            friend.setLogin(rs.getString("friend_login"));
+            friend.setBirthday(rs.getDate("friend_birthday_date").toLocalDate());
+
+            friends.put(friend, rs.getBoolean("is_confirmed") ? FriendshipStatus.CONFIRMED : FriendshipStatus.NOT_CONFIRMED);
+        });
+
+        return allFriends;
+    }
+
+    private Map<User, FriendshipStatus> getFriendsForUserId(Long id) {
+        String query = """
+                SELECT u.id, u.email, u.name, u.login, u.birthday_date, f.is_confirmed
+                FROM users as u
+                INNER JOIN friends as f ON u.id = f.friend_id AND f.user_id = ?
+                """;
+
+        Map<User, FriendshipStatus> friends = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            User friend = new User();
+
+            friend.setId(rs.getLong("id"));
+            friend.setEmail(rs.getString("email"));
+            friend.setName(rs.getString("name"));
+            friend.setLogin(rs.getString("login"));
+            friend.setBirthday(rs.getDate("birthday_date").toLocalDate());
+
+            friends.put(friend, rs.getBoolean("is_confirmed") ? FriendshipStatus.CONFIRMED : FriendshipStatus.NOT_CONFIRMED);
+        }, id);
+
+        return friends;
     }
 }

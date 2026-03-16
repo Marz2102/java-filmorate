@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.genreDto.GenreDto;
 import ru.yandex.practicum.filmorate.mpaDto.MpaDto;
+import ru.yandex.practicum.filmorate.userDto.LikesDto;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,4 +21,5 @@ public class FilmDto {
     private Integer duration;
     private List<GenreDto> genres;
     private MpaDto mpa;
+    private List<LikesDto> likes;
 }

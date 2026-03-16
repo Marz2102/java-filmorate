@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.filmDto.FilmUpdateDto;
 import ru.yandex.practicum.filmorate.genreDto.GenreDto;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -43,6 +44,8 @@ public final class FilmMapper {
         if (film.getMpa() != null) {
             filmDto.setMpa(MpaMapper.mapToMpaDto(film.getMpa()));
         }
+
+        filmDto.setLikes(new ArrayList<>(film.getLikes()));
 
         return filmDto;
     }
