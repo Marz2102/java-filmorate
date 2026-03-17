@@ -1,0 +1,56 @@
+package ru.yandex.practicum.filmorate.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
+import ru.yandex.practicum.filmorate.dto.director.DirectorUpdateDto;
+import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+
+import java.util.List;
+
+@Service
+public class DirectorService {
+
+    private final DirectorStorage directorStorage;
+
+    @Autowired
+    public DirectorService(@Qualifier("DirectorDao") DirectorStorage directorStorage) {
+        this.directorStorage = directorStorage;
+    }
+
+    public List<DirectorDto> getDirectors() {
+        return directorStorage.getDirectors().stream()
+                .map(DirectorMapper::mapDirectorToDirectorDto)
+                .toList();
+    }
+
+    public DirectorDto getDirectorById(Long id) {
+        return directorStorage.findById(id)
+                .map(DirectorMapper::mapDirectorToDirectorDto)
+                .orElseThrow(() -> new NotFoundException("Рейтинг с id - " + id + " не найден"));
+    }
+
+    public void deleteDirectorById(Long id) {
+        directorStorage.deleteDirector(id);
+    }
+
+    public DirectorDto addDirector(DirectorDto directorDto) {
+        Director director = DirectorMapper.mapDirectorDtoToDirector(directorDto);
+
+        director = directorStorage.addDirector(director);
+
+        return DirectorMapper.mapDirectorToDirectorDto(director);
+    }
+
+    public DirectorDto updateDirector(DirectorUpdateDto directorUpdateDto) {
+        Director updatedDirector = directorStorage.findById(directorUpdateDto.getId())
+                .map(director -> DirectorMapper.updateDirectorFields(directorUpdateDto, director))
+                .orElseThrow(() -> new NotFoundException("Фильм с id - " + directorUpdateDto.getId() + " не найден"));
+
+        return DirectorMapper.mapDirectorToDirectorDto(directorStorage.updateDirector(updatedDirector));
+    }
+}
