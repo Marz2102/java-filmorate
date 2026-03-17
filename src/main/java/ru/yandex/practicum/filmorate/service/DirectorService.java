@@ -31,7 +31,7 @@ public class DirectorService {
     public DirectorDto getDirectorById(Long id) {
         return directorStorage.findById(id)
                 .map(DirectorMapper::mapDirectorToDirectorDto)
-                .orElseThrow(() -> new NotFoundException("Рейтинг с id - " + id + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Директор с id - " + id + " не найден"));
     }
 
     public void deleteDirectorById(Long id) {
@@ -49,7 +49,7 @@ public class DirectorService {
     public DirectorDto updateDirector(DirectorUpdateDto directorUpdateDto) {
         Director updatedDirector = directorStorage.findById(directorUpdateDto.getId())
                 .map(director -> DirectorMapper.updateDirectorFields(directorUpdateDto, director))
-                .orElseThrow(() -> new NotFoundException("Фильм с id - " + directorUpdateDto.getId() + " не найден"));
+                .orElseThrow(() -> new NotFoundException("Директор с id - " + directorUpdateDto.getId() + " не найден"));
 
         return DirectorMapper.mapDirectorToDirectorDto(directorStorage.updateDirector(updatedDirector));
     }

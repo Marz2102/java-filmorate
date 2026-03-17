@@ -29,7 +29,7 @@ public class DirectorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DirectorDto>> getAllDirector() {
+    public ResponseEntity<List<DirectorDto>> getAllDirectors() {
         log.info("Вызван эндпоинт на получение всех режиссёров");
         return ResponseEntity.ok(directorService.getDirectors());
     }
