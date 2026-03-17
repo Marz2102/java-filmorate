@@ -150,8 +150,10 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
-        String query = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
-        int rowsUpdated = jdbc.update(query,
+        String updateFilmSql =
+                "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+
+        int rowsUpdated = jdbc.update(updateFilmSql,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
@@ -160,6 +162,24 @@ public class FilmDbStorage implements FilmStorage {
 
         if (rowsUpdated == 0) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
+        }
+
+        String deleteDirectorsSql = "DELETE FROM film_directors WHERE film_id = ?";
+        jdbc.update(deleteDirectorsSql, film.getId());
+
+        if (film.getDirectors() != null && !film.getDirectors().isEmpty()) {
+            String insertDirectorsSql =
+                    "MERGE INTO film_directors (film_id, director_id) VALUES (?, ?)";
+
+            jdbc.batchUpdate(
+                    insertDirectorsSql,
+                    film.getDirectors(),
+                    film.getDirectors().size(),
+                    (ps, director) -> {
+                        ps.setLong(1, film.getId());
+                        ps.setLong(2, director.getId());
+                    }
+            );
         }
 
         film.setDirectors(getDirectorsForFilmId(film.getId()));

@@ -8,11 +8,11 @@ import ru.yandex.practicum.filmorate.dto.film.FilmCreateDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmUpdateDto;
 import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -48,7 +48,7 @@ public final class FilmMapper {
                 .map(DirectorMapper::mapDirectorToDirectorDto)
                 .sorted(Comparator.comparingLong(DirectorDto::getId))
                 .toList();
-        filmDto.setDirector(directors);
+        filmDto.setDirectors(directors);
 
         if (film.getMpa() != null) {
             filmDto.setMpa(MpaMapper.mapMpaToMpaDto(film.getMpa()));
@@ -78,6 +78,23 @@ public final class FilmMapper {
         if (filmUpdateDto.getDuration() != null) {
             film.setDuration(filmUpdateDto.getDuration());
             log.debug("Обновили продолжительность фильма - {}", film.getDuration());
+        }
+
+        if (filmUpdateDto.getDirectors() != null) {
+            if (filmUpdateDto.getDirectors().isEmpty()) {
+                film.setDirectors(new HashSet<>());
+                log.debug("Очистили список режиссёров фильма");
+            } else {
+                Set<Director> directors = filmUpdateDto.getDirectors().stream()
+                        .map(d -> {
+                            Director director = new Director();
+                            director.setId(d.getId());
+                            return director;
+                        })
+                        .collect(Collectors.toSet());
+                film.setDirectors(directors);
+                log.debug("Обновили режиссёров фильма, ids={}", filmUpdateDto.getDirectors());
+            }
         }
 
         return film;

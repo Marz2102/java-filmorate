@@ -36,7 +36,7 @@ public class MpaDbStorage implements MpaStorage {
     }
 
     public List<Mpa> getAllMpa() {
-        String query = "SELECT id, name FROM ratings ORDER BY id DESC";
+        String query = "SELECT id, name FROM ratings ORDER BY id";
         return jdbc.query(query, mpaRowMapper);
     }
 }

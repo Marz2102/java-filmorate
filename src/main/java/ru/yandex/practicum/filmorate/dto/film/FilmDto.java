@@ -23,5 +23,5 @@ public class FilmDto {
     private List<GenreDto> genres;
     private MpaDto mpa;
     private List<LikesDto> likes;
-    private List<DirectorDto> director;
+    private List<DirectorDto> directors;
 }

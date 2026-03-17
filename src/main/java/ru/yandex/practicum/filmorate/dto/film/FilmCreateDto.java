@@ -28,7 +28,7 @@ public class FilmCreateDto {
 
     private List<FilmGenreDto> genres;
 
-    private List<FilmDirectorDto> director;
+    private List<FilmDirectorDto> directors;
 
     private FilmMpaDto mpa;
 
@@ -43,11 +43,11 @@ public class FilmCreateDto {
     }
 
     public Set<Long> getDirectorIds() {
-        if (director == null) {
+        if (directors == null) {
             return Collections.emptySet();
         }
 
-        return director.stream()
+        return directors.stream()
                 .map(FilmDirectorDto::getId)
                 .collect(Collectors.toSet());
     }

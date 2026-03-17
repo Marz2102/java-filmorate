@@ -7,8 +7,10 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.yandex.practicum.filmorate.dto.director.UpdateDirectorDto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -27,4 +29,6 @@ public class FilmUpdateDto {
 
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
+
+    private List<UpdateDirectorDto> directors;
 }

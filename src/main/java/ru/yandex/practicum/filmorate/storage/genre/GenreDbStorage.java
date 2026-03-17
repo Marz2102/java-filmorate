@@ -36,7 +36,7 @@ public class GenreDbStorage implements GenreStorage {
     }
 
     public List<Genre> getGenres() {
-        String query = "SELECT id, name FROM genres ORDER BY id DESC";
+        String query = "SELECT id, name FROM genres ORDER BY id";
         return jdbc.query(query, genreRowMapper);
     }
 }
