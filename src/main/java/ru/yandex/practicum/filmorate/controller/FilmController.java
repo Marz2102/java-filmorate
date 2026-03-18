@@ -94,4 +94,11 @@ public class FilmController {
         log.info("Вызван эндпоинт на получение списка общих фильмов для пользователей {} и {}", userId, friendId);
         return ResponseEntity.ok(filmService.getCommonFilms(userId, friendId));
     }
+
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Void> deleteFilm(@PathVariable Long filmId) {
+        log.info("Вызван эндпоинт на удаление фильма с id {}", filmId);
+        filmService.deleteFilm(filmId);
+        return ResponseEntity.noContent().build();
+    }
 }
