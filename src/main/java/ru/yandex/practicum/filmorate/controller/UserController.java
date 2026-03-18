@@ -72,4 +72,12 @@ public class UserController {
         log.info("Вызван эндпоинт на получение списка общих друзей у двух пользователей");
         return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
+        log.info("Вызван эндпоинт на удаление пользователя с id {}", userId);
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
