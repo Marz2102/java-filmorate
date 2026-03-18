@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -374,6 +376,36 @@ class FilmorateApplicationTests {
         assertEquals(oldFilm.getId(), films.get(0).getId()); // раньше дата
         assertEquals(newFilm.getId(), films.get(1).getId());
     }
+
+    @Test
+    public void testDeleteUser() {
+        User userToDelete = new User();
+        userToDelete.setEmail("delete@test.com");
+        userToDelete.setLogin("delete");
+        userToDelete.setName("To Delete");
+        userToDelete.setBirthday(LocalDate.of(2000, 1, 1));
+        userToDelete = userStorage.addUser(userToDelete);
+
+        Long userId = userToDelete.getId();
+
+        Optional<User> foundUser = userStorage.findById(userId);
+        assertThat(foundUser).isPresent();
+
+        userStorage.deleteUser(userId);
+
+        Optional<User> deletedUser = userStorage.findById(userId);
+        assertThat(deletedUser).isNotPresent();
+    }
+
+    @Test
+    public void testDeleteNonExistentUser() {
+        Long nonExistentId = 999L;
+
+        assertThrows(ResponseStatusException.class, () -> {
+            userStorage.deleteUser(nonExistentId);
+        });
+    }
+
 
     @Test
     public void testGetCommonFilms() {
