@@ -217,39 +217,38 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
-                SELECT f.id, f.name, f.description, f.release_date, f.duration, 
-                       r.id as mpa_id, r.name as mpa_name,
-                       COUNT(l.user_id) as likes_count
-                FROM films as f
-                LEFT JOIN likes as l ON f.id = l.film_id
-                LEFT JOIN ratings as r ON f.rating_id = r.id
-                """);
+            SELECT f.id, f.name, f.description, f.release_date, f.duration, 
+                   r.id as mpa_id, r.name as mpa_name,
+                   COUNT(l.user_id) as likes_count
+            FROM films as f
+            LEFT JOIN likes as l ON f.id = l.film_id
+            LEFT JOIN ratings as r ON f.rating_id = r.id
+            """);
 
         List<Object> params = new ArrayList<>();
+        boolean hasWhere = false;
 
-        // Добавляем JOIN с film_genres если нужна фильтрация по жанру
         if (genreId != null) {
             query.append(" INNER JOIN film_genres as fg ON f.id = fg.film_id AND fg.genre_id = ?");
             params.add(genreId);
         }
 
-        // Добавляем WHERE для фильтрации по году
         if (year != null) {
             query.append(" WHERE YEAR(f.release_date) = ?");
             params.add(year);
+            hasWhere = true;
         }
 
         query.append("""
-                GROUP BY f.id, f.name, f.description, f.release_date, f.duration, 
-                         r.id, r.name
-                ORDER BY likes_count DESC
-                LIMIT ?
-                """);
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, 
+                     r.id, r.name
+            ORDER BY likes_count DESC
+            LIMIT ?
+            """);
         params.add(count);
 
         List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
 
-        // Используем существующий метод для загрузки всех связанных данных
         setAllGenresDirectorsAndLikes(films);
 
         return films;
