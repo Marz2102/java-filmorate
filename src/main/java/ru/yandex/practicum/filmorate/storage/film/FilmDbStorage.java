@@ -217,7 +217,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
-            SELECT f.id, f.name, f.description, f.release_date, f.duration, 
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
                    r.id as mpa_id, r.name as mpa_name,
                    COUNT(l.user_id) as likes_count
             FROM films as f
@@ -240,7 +240,7 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         query.append("""
-            GROUP BY f.id, f.name, f.description, f.release_date, f.duration, 
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
                      r.id, r.name
             ORDER BY likes_count DESC
             LIMIT ?
