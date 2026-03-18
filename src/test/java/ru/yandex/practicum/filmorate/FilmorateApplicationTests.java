@@ -406,6 +406,36 @@ class FilmorateApplicationTests {
         });
     }
 
+    @Test
+    public void testDeleteFilm() {
+        Film filmToDelete = new Film();
+        filmToDelete.setName("Film To Delete");
+        filmToDelete.setDescription("Will be deleted");
+        filmToDelete.setDuration(100);
+        filmToDelete.setReleaseDate(LocalDate.of(2000, 1, 1));
+        filmToDelete.setMpa(new Mpa(1L, "G"));
+        filmToDelete = filmStorage.addFilm(filmToDelete);
+
+        Long filmId = filmToDelete.getId();
+
+        Optional<Film> foundFilm = filmStorage.findById(filmId);
+        assertThat(foundFilm).isPresent();
+
+        filmStorage.deleteFilm(filmId);
+
+        Optional<Film> deletedFilm = filmStorage.findById(filmId);
+        assertThat(deletedFilm).isNotPresent();
+    }
+
+    @Test
+    public void testDeleteNonExistentFilm() {
+        Long nonExistentId = 999L;
+
+        assertThrows(ResponseStatusException.class, () -> {
+            filmStorage.deleteFilm(nonExistentId);
+        });
+    }
+
 
     @Test
     public void testGetCommonFilms() {
