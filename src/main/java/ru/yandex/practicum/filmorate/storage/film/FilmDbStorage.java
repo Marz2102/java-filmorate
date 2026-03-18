@@ -297,6 +297,16 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    @Override
+    public void deleteFilm(Long filmId) {
+        String query = "DELETE FROM films WHERE id = ?";
+        int rowsDeleted = jdbc.update(query, filmId);
+
+        if (rowsDeleted == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с id " + filmId + " не найден");
+        }
+    }
+
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
@@ -497,5 +507,4 @@ public class FilmDbStorage implements FilmStorage {
 
         return allLikes;
     }
-
 }
