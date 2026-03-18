@@ -208,22 +208,7 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getMostLikedFilms(int count) {
-        String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
-               FROM films as f
-               LEFT JOIN (SELECT film_id, count(*) as cnt_likes
-                           FROM likes
-                           GROUP BY film_id) as t ON f.id = t.film_id
-               LEFT JOIN ratings as r ON f.rating_id = r.id
-               ORDER BY t.cnt_likes DESC
-               LIMIT ?
-               """;
-
-        List<Film> films = jdbc.query(query, filmRowMapper, count);
-
-        setAllGenresDirectorsAndLikes(films);
-
-        return films;
+        return getMostLikedFilms(count, null, null);
     }
 
     @Override
