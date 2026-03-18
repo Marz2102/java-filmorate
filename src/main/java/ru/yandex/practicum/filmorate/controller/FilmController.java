@@ -84,4 +84,12 @@ public class FilmController {
         log.info("Вызван эндпоинт на получение фильмов режиссёра {} с сортировкой {}", id, sortBy);
         return ResponseEntity.ok(filmService.getAllFilmsByDirectorId(id, sortBy));
     }
+
+    @GetMapping("/common")
+    public ResponseEntity<List<FilmDto>> getCommonFilms(
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "friendId") Long friendId) {
+        log.info("Вызван эндпоинт на получение списка общих фильмов для пользователей {} и {}", userId, friendId);
+        return ResponseEntity.ok(filmService.getCommonFilms(userId, friendId));
+    }
 }
