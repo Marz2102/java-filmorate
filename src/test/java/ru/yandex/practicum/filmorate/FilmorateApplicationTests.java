@@ -7,14 +7,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.GenreStorage;
-import ru.yandex.practicum.filmorate.storage.MpaStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
+import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -32,14 +30,21 @@ class FilmorateApplicationTests {
     private final FilmStorage filmStorage;
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
+    private final DirectorStorage directorStorage;
 
     @Autowired
-    FilmorateApplicationTests(@Qualifier("UserDao") final UserStorage userStorage, @Qualifier("FilmDao") final  FilmStorage filmStorage,
-                              @Qualifier("GenreDao") final GenreStorage genreStorage, @Qualifier("MpaDao") final MpaStorage mpaStorage) {
+    FilmorateApplicationTests(
+            @Qualifier("UserDao") final UserStorage userStorage,
+            @Qualifier("FilmDao") final  FilmStorage filmStorage,
+            @Qualifier("GenreDao") final GenreStorage genreStorage,
+            @Qualifier("MpaDao") final MpaStorage mpaStorage,
+            @Qualifier("DirectorDao") final DirectorStorage directorStorage
+    ) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
+        this.directorStorage = directorStorage;
     }
 
     @BeforeEach
@@ -238,5 +243,129 @@ class FilmorateApplicationTests {
         assertEquals(5, mpaStorage.getAllMpa().size());
         assertEquals("PG-13", mpaStorage.findById(3L).get().getName());
     }
-}
 
+    @Test
+    public void testAddAndFindDirector() {
+        Director director = new Director();
+        director.setName("Director One");
+
+        Director saved = directorStorage.addDirector(director);
+        assertThat(saved.getId()).isNotNull();
+
+        Optional<Director> fromDb = directorStorage.findById(saved.getId());
+        assertThat(fromDb)
+                .isPresent()
+                .hasValueSatisfying(d ->
+                        assertThat(d).hasFieldOrPropertyWithValue("name", "Director One")
+                );
+    }
+
+    @Test
+    public void testUpdateDirector() {
+        Director director = new Director();
+        director.setName("Old Name");
+        Director saved = directorStorage.addDirector(director);
+
+        saved.setName("New Name");
+        Director updated = directorStorage.updateDirector(saved);
+
+        Optional<Director> fromDb = directorStorage.findById(updated.getId());
+        assertThat(fromDb)
+                .isPresent()
+                .hasValueSatisfying(d ->
+                        assertThat(d).hasFieldOrPropertyWithValue("name", "New Name")
+                );
+    }
+
+    @Test
+    public void testDeleteDirector() {
+        Director director = new Director();
+        director.setName("To Delete");
+        Director saved = directorStorage.addDirector(director);
+
+        directorStorage.deleteDirector(saved.getId());
+
+        Optional<Director> fromDb = directorStorage.findById(saved.getId());
+        assertThat(fromDb).isNotPresent();
+    }
+
+    @Test
+    public void testGetFilmsByDirectorSortedByLikes() {
+        Director director = new Director();
+        director.setName("Likes Director");
+        Director savedDirector = directorStorage.addDirector(director);
+
+        Film film1 = new Film();
+        film1.setName("Film1");
+        film1.setDescription("desc1");
+        film1.setDuration(100);
+        film1.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film1.setMpa(new Mpa(1L, "G"));
+        film1.setDirectors(new HashSet<>(List.of(savedDirector)));
+        film1 = filmStorage.addFilm(film1);
+
+        Film film2 = new Film();
+        film2.setName("Film2");
+        film2.setDescription("desc2");
+        film2.setDuration(110);
+        film2.setReleaseDate(LocalDate.of(2001, 1, 1));
+        film2.setMpa(new Mpa(1L, "G"));
+        film2.setDirectors(new HashSet<>(List.of(savedDirector)));
+        film2 = filmStorage.addFilm(film2);
+
+        User u1 = new User();
+        u1.setEmail("u1@test.com");
+        u1.setLogin("u1");
+        u1.setName("u1");
+        u1.setBirthday(LocalDate.of(2000, 1, 1));
+        u1 = userStorage.addUser(u1);
+
+        User u2 = new User();
+        u2.setEmail("u2@test.com");
+        u2.setLogin("u2");
+        u2.setName("u2");
+        u2.setBirthday(LocalDate.of(2000, 1, 1));
+        u2 = userStorage.addUser(u2);
+
+        filmStorage.addLike(film1.getId(), u1.getId());
+        filmStorage.addLike(film2.getId(), u1.getId());
+        filmStorage.addLike(film2.getId(), u2.getId());
+
+        List<Film> films = filmStorage.getFilmsByDirectorId(savedDirector.getId(), "likes");
+
+        assertEquals(2, films.size());
+        assertEquals(film2.getId(), films.get(0).getId()); // больше лайков
+        assertEquals(film1.getId(), films.get(1).getId());
+    }
+
+    @Test
+    public void testGetFilmsByDirectorSortedByYear() {
+        Director director = new Director();
+        director.setName("Year Director");
+        Director savedDirector = directorStorage.addDirector(director);
+
+        Film oldFilm = new Film();
+        oldFilm.setName("Old");
+        oldFilm.setDescription("old");
+        oldFilm.setDuration(90);
+        oldFilm.setReleaseDate(LocalDate.of(1990, 1, 1));
+        oldFilm.setMpa(new Mpa(1L, "G"));
+        oldFilm.setDirectors(new HashSet<>(List.of(savedDirector)));
+        oldFilm = filmStorage.addFilm(oldFilm);
+
+        Film newFilm = new Film();
+        newFilm.setName("New");
+        newFilm.setDescription("new");
+        newFilm.setDuration(100);
+        newFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        newFilm.setMpa(new Mpa(1L, "G"));
+        newFilm.setDirectors(new HashSet<>(List.of(savedDirector)));
+        newFilm = filmStorage.addFilm(newFilm);
+
+        List<Film> films = filmStorage.getFilmsByDirectorId(savedDirector.getId(), "year");
+
+        assertEquals(2, films.size());
+        assertEquals(oldFilm.getId(), films.get(0).getId()); // раньше дата
+        assertEquals(newFilm.getId(), films.get(1).getId());
+    }
+}
