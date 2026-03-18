@@ -374,6 +374,46 @@ class FilmorateApplicationTests {
     }
 
     @Test
+    public void testGetCommonFilms() {
+        User newUser = new User();
+        newUser.setId(2L);
+        newUser.setEmail("test@test2.com");
+        newUser.setLogin("test2");
+        newUser.setName("TestName2");
+        newUser.setBirthday(LocalDate.of(2000, 10, 10));
+        userStorage.addUser(newUser);
+
+        Film newFilm = new Film();
+        newFilm.setId(2L);
+        newFilm.setName("TestFilm2");
+        newFilm.setDescription("TestDescription2");
+        newFilm.setDuration(200);
+        newFilm.setReleaseDate(LocalDate.of(1990, 12, 12));
+        newFilm.setGenres(new HashSet<>(List.of(new Genre(5L, "Документальный"))));
+        newFilm.setMpa(new Mpa(5L, "NC-17"));
+        filmStorage.addFilm(newFilm);
+
+        List<Film> films = filmStorage.getCommonFilms(1L, 2L);
+        assertEquals(0, films.size());
+
+        filmStorage.addLike(1L, 1L);
+        filmStorage.addLike(2L, 2L);
+
+        films = filmStorage.getCommonFilms(1L, 2L);
+        assertEquals(0, films.size());
+
+        filmStorage.addLike(1L, 2L);
+
+        films = filmStorage.getCommonFilms(1L, 2L);
+        assertEquals(1, films.size());
+
+        filmStorage.deleteLike(1L, 2L);
+
+        films = filmStorage.getCommonFilms(1L, 2L);
+        assertEquals(0, films.size());
+    }
+
+    @Test
     public void testGetRecommendedFilms() {
 // User 1 (G)
         User user1 = new User();
