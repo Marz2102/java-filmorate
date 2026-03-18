@@ -141,6 +141,15 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
+    public void deleteFilm(Long filmId) {
+        log.info("Вызван метод удаления фильма с id {}", filmId);
+
+        getFilmById(filmId);
+
+        filmStorage.deleteFilm(filmId);
+        log.info("Фильм с id {} успешно удален", filmId);
+    }
+
     private void checkToFindByIds(Long filmId, Long userId) {
         getFilmById(filmId);
         userService.getUserById(userId);
