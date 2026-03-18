@@ -92,6 +92,15 @@ public class UserService {
                 .toList();
     }
 
+    public void deleteUser(Long userId) {
+        log.info("Вызван метод удаления пользователя с id {}", userId);
+
+        getUserById(userId);
+
+        userStorage.deleteUser(userId);
+        log.info("Пользователь с id {} успешно удален", userId);
+    }
+
     private void checkToFindByIds(Long id, Long friendId) {
         if (userStorage.findById(id).isEmpty()) {
             log.info("Не найдено пользователя с указанным id - {}", id);
