@@ -209,6 +209,7 @@ public class FilmDbStorage implements FilmStorage {
         return findById(filmId).orElse(null);
     }
 
+    // Метод с фильтрацией (твой из первой задачи)
     @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
@@ -221,7 +222,6 @@ public class FilmDbStorage implements FilmStorage {
             """);
 
         List<Object> params = new ArrayList<>();
-        boolean hasWhere = false;
 
         if (genreId != null) {
             query.append(" INNER JOIN film_genres as fg ON f.id = fg.film_id AND fg.genre_id = ?");
@@ -231,7 +231,6 @@ public class FilmDbStorage implements FilmStorage {
         if (year != null) {
             query.append(" WHERE YEAR(f.release_date) = ?");
             params.add(year);
-            hasWhere = true;
         }
 
         query.append("""
@@ -297,6 +296,7 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    // Твой метод удаления из второй задачи
     @Override
     public void deleteFilm(Long filmId) {
         String query = "DELETE FROM films WHERE id = ?";
@@ -307,6 +307,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    // Метод коллеги (общие фильмы)
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
@@ -327,15 +328,7 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    /*
-    Метод поиска рекомендованных фильмов:
-    1. Первым запросом найдутся пользователи, которые ставили лайки тем же фильмам;
-        Сформированная таблица сортируется по большему количеству совпадений.
-        Колонки выгружаются в лист и лист проверяется на пустоту.
-    2. Вторым запросом сформируется таблица с id фильмов пользователей из первого запроса,
-        фильтруются фильмы которые лайкал пользователь, id фильмов добавляются в LinkedHashSet для сохранения положения;
-    3. В return выгружаются фильмы по id из LinkedHashSet;
-     */
+    // Метод коллеги (рекомендации)
     public List<Film> getRecommendationsByUserId(Long id) {
 
         String similarUsersQuery = """
