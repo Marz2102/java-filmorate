@@ -22,7 +22,6 @@ import org.assertj.core.api.Assertions;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
@@ -988,8 +987,8 @@ class FilmorateApplicationTests {
         filmStorage.addLike(film2020.getId(), user.getId());
 
         List<Film> films2020 = filmStorage.getMostLikedFilms(10, null, 2020);
-        assertEquals(2, films2020.size());
-        assertTrue(films2020.stream().anyMatch(f -> f.getName().equals("Film 2020")));
+        assertEquals(1, films2020.size());
+        assertEquals("Film 2020", films2020.get(0).getName());
 
         List<Film> films2021 = filmStorage.getMostLikedFilms(10, null, 2021);
         assertEquals(1, films2021.size());
@@ -1000,15 +999,6 @@ class FilmorateApplicationTests {
     public void testGetMostLikedFilmsFilterByGenre() {
         User user = userStorage.getUsers().get(0);
 
-        Film comedy = new Film();
-        comedy.setName("Comedy Film");
-        comedy.setDescription("Funny");
-        comedy.setDuration(100);
-        comedy.setReleaseDate(LocalDate.of(2020, 6, 1));
-        comedy.setMpa(new Mpa(1L, "G"));
-        comedy.setGenres(new HashSet<>(List.of(new Genre(1L, "Комедия"))));
-        comedy = filmStorage.addFilm(comedy);
-
         Film drama = new Film();
         drama.setName("Drama Film");
         drama.setDescription("Sad");
@@ -1018,13 +1008,11 @@ class FilmorateApplicationTests {
         drama.setGenres(new HashSet<>(List.of(new Genre(2L, "Драма"))));
         drama = filmStorage.addFilm(drama);
 
-        filmStorage.addLike(comedy.getId(), user.getId());
+        filmStorage.addLike(drama.getId(), user.getId());
 
         List<Film> comedyFilms = filmStorage.getMostLikedFilms(10, 1L, null);
-        assertEquals(2, comedyFilms.size());
-        assertTrue(comedyFilms.stream().allMatch(f ->
-                f.getGenres().stream().anyMatch(g -> g.getId() == 1L)
-        ));
+        assertEquals(1, comedyFilms.size());
+        assertEquals("TestFilm", comedyFilms.get(0).getName());
 
         List<Film> dramaFilms = filmStorage.getMostLikedFilms(10, 2L, null);
         assertEquals(1, dramaFilms.size());
@@ -1056,10 +1044,8 @@ class FilmorateApplicationTests {
         filmStorage.addLike(comedy2020.getId(), user.getId());
 
         List<Film> comedy2020films = filmStorage.getMostLikedFilms(10, 1L, 2020);
-        assertEquals(2, comedy2020films.size());
-        assertTrue(comedy2020films.stream().allMatch(f ->
-                f.getReleaseDate().getYear() == 2020 || f.getReleaseDate().getYear() == 1990
-        ));
+        assertEquals(1, comedy2020films.size());
+        assertEquals("Comedy 2020", comedy2020films.get(0).getName());
 
         List<Film> comedy2021films = filmStorage.getMostLikedFilms(10, 1L, 2021);
         assertEquals(1, comedy2021films.size());

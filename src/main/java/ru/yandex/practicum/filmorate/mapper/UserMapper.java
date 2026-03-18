@@ -3,12 +3,12 @@ package ru.yandex.practicum.filmorate.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.dto.user.FriendDto;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
+import ru.yandex.practicum.filmorate.model.FriendshipStatus;
+import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,8 +47,8 @@ public final class UserMapper {
             Map<FriendDto, FriendshipStatus> friends = user.getFriends().entrySet()
                     .stream()
                     .collect(Collectors.toMap(
-                        f -> mapToFriendDto(f.getKey()),
-                        Map.Entry::getValue
+                            f -> mapToFriendDto(f.getKey()),
+                            Map.Entry::getValue
                     ));
 
             userDto.setFriends(friends);

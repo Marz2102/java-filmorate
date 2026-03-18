@@ -73,13 +73,4 @@ public class UserController {
         log.info("Вызван эндпоинт на получение списка общих друзей у двух пользователей");
         return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
-
-    /*
-    Эндпоинт запроса рекомендаций для пользователя основанный на его лайках
-    */
-    @GetMapping("/{id}/recommendations")
-    public ResponseEntity<List<FilmDto>> getRecommendedFilms(@PathVariable Long id) {
-        log.info("Вызван эндпоинт на получение списка рекомендованных фильмов для пользователя с ID: {}", id);
-        return ResponseEntity.ok(userService.getRecommendedFilms(id));
-    }
 }

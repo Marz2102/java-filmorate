@@ -7,12 +7,15 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.dto.user.LikesDto;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.MpaRowMapper;
-import ru.yandex.practicum.filmorate.dto.user.LikesDto;
 
 import javax.sql.DataSource;
 import java.sql.Date;
@@ -42,11 +45,11 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Optional<Film> findById(Long id) {
         String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
-               FROM films as f
-               LEFT JOIN ratings as r ON f.rating_id = r.id
-               WHERE f.id = ?
-               """;
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
+                FROM films as f
+                LEFT JOIN ratings as r ON f.rating_id = r.id
+                WHERE f.id = ?
+                """;
 
         try {
             Film film = jdbc.queryForObject(query, filmRowMapper, id);
@@ -214,13 +217,13 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
-           SELECT f.id, f.name, f.description, f.release_date, f.duration, 
-                  r.id as mpa_id, r.name as mpa_name,
-                  COUNT(l.user_id) as likes_count
-           FROM films as f
-           LEFT JOIN likes as l ON f.id = l.film_id
-           LEFT JOIN ratings as r ON f.rating_id = r.id
-           """);
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, 
+                       r.id as mpa_id, r.name as mpa_name,
+                       COUNT(l.user_id) as likes_count
+                FROM films as f
+                LEFT JOIN likes as l ON f.id = l.film_id
+                LEFT JOIN ratings as r ON f.rating_id = r.id
+                """);
 
         List<Object> params = new ArrayList<>();
 
@@ -237,11 +240,11 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         query.append("""
-           GROUP BY f.id, f.name, f.description, f.release_date, f.duration, 
-                    r.id, r.name
-           ORDER BY likes_count DESC
-           LIMIT ?
-           """);
+                GROUP BY f.id, f.name, f.description, f.release_date, f.duration, 
+                         r.id, r.name
+                ORDER BY likes_count DESC
+                LIMIT ?
+                """);
         params.add(count);
 
         List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
@@ -257,38 +260,38 @@ public class FilmDbStorage implements FilmStorage {
         String query;
         if ("likes".equals(sortParam)) {
             query = """
-              SELECT f.id,
-                     f.name,
-                     f.description,
-                     f.release_date,
-                     f.duration,
-                     r.id   AS mpa_id,
-                     r.name AS mpa_name
-              FROM films AS f
-              LEFT JOIN ratings AS r ON r.id = f.rating_id
-              JOIN film_directors AS fd ON fd.film_id = f.id
-              JOIN directors AS d ON d.id = fd.director_id
-              LEFT JOIN likes l ON l.film_id = f.id
-              WHERE d.id = ?
-              GROUP BY f.id, f.name, f.description, f.release_date, f.duration, r.id, r.name
-              ORDER BY COUNT(l.user_id) DESC
-              """;
+                    SELECT f.id,
+                           f.name,
+                           f.description,
+                           f.release_date,
+                           f.duration,
+                           r.id   AS mpa_id,
+                           r.name AS mpa_name
+                    FROM films AS f
+                    LEFT JOIN ratings AS r ON r.id = f.rating_id
+                    JOIN film_directors AS fd ON fd.film_id = f.id
+                    JOIN directors AS d ON d.id = fd.director_id
+                    LEFT JOIN likes l ON l.film_id = f.id
+                    WHERE d.id = ?
+                    GROUP BY f.id, f.name, f.description, f.release_date, f.duration, r.id, r.name
+                    ORDER BY COUNT(l.user_id) DESC
+                    """;
         } else if ("year".equals(sortParam)) {
             query = """
-              SELECT f.id,
-                     f.name,
-                     f.description,
-                     f.release_date,
-                     f.duration,
-                     r.id   AS mpa_id,
-                     r.name AS mpa_name
-              FROM films AS f
-              LEFT JOIN ratings AS r ON r.id = f.rating_id
-              JOIN film_directors AS fd ON fd.film_id = f.id
-              JOIN directors AS d ON d.id = fd.director_id
-              WHERE d.id = ?
-              ORDER BY f.release_date
-              """;
+                    SELECT f.id,
+                           f.name,
+                           f.description,
+                           f.release_date,
+                           f.duration,
+                           r.id   AS mpa_id,
+                           r.name AS mpa_name
+                    FROM films AS f
+                    LEFT JOIN ratings AS r ON r.id = f.rating_id
+                    JOIN film_directors AS fd ON fd.film_id = f.id
+                    JOIN directors AS d ON d.id = fd.director_id
+                    WHERE d.id = ?
+                    ORDER BY f.release_date
+                    """;
         } else {
             throw new IllegalArgumentException("Unknown sort param: " + sortParam);
         }
@@ -403,14 +406,14 @@ public class FilmDbStorage implements FilmStorage {
         Map<Long, Set<Genre>> filmsGenres = new HashMap<>();
 
         jdbc.query(query, (rs) -> {
-           Long filmId = rs.getLong("film_id");
-           Set<Genre> genres = filmsGenres.computeIfAbsent(filmId, k -> new HashSet<>());
+            Long filmId = rs.getLong("film_id");
+            Set<Genre> genres = filmsGenres.computeIfAbsent(filmId, k -> new HashSet<>());
 
-           Genre genre = new Genre();
-           genre.setId(rs.getLong("genre_id"));
-           genre.setName(rs.getString("name"));
+            Genre genre = new Genre();
+            genre.setId(rs.getLong("genre_id"));
+            genre.setName(rs.getString("name"));
 
-           genres.add(genre);
+            genres.add(genre);
         });
 
         return filmsGenres;
@@ -500,4 +503,5 @@ public class FilmDbStorage implements FilmStorage {
 
         return allLikes;
     }
+
 }
