@@ -35,8 +35,6 @@ public final class ReviewMapper {
     }
 
     public static Review updateReviewFields(ReviewUpdateDto reviewDto, Review review) {
-        System.out.println(reviewDto);
-
         if (reviewDto.getIsPositive() != null) {
             review.setIsPositive(reviewDto.getIsPositive());
         }
@@ -44,8 +42,6 @@ public final class ReviewMapper {
         if (reviewDto.getContent() != null) {
             review.setContent(reviewDto.getContent());
         }
-
-        System.out.println(review);
 
         return review;
     }
