@@ -12,10 +12,7 @@ import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.mapper.MpaMapper;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
@@ -127,12 +124,18 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
-    private void checkToFindByIds(Long filmId, Long userId) {
-        if (filmStorage.findById(filmId).isEmpty()) {
-            log.info("Не найдено фильма с указанным id - {}", filmId);
-            throw new NotFoundException("Фильм с id - " + filmId + " не найден");
-        }
+    public List<FilmDto> getCommonFilms(Long userId, Long friendId) {
+        userService.getUserById(userId);
+        userService.getUserById(friendId);
 
+        return filmStorage.getCommonFilms(userId, friendId)
+                .stream()
+                .map(FilmMapper::mapFilmToFilmDto)
+                .collect(Collectors.toList());
+    }
+
+    private void checkToFindByIds(Long filmId, Long userId) {
+        getFilmById(filmId);
         userService.getUserById(userId);
     }
 

@@ -274,6 +274,26 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        String query = """
+               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
+               FROM films as f
+               INNER JOIN likes as l1 ON l1.film_id = f.id AND l1.user_id = ?
+               INNER JOIN likes as l2 ON l2.film_id = f.id AND l2.user_id = ?
+               INNER JOIN (SELECT film_id, count(*) as cnt_likes
+                           FROM likes
+                           GROUP BY film_id) as t ON f.id = t.film_id
+               LEFT JOIN ratings as r ON f.rating_id = r.id
+               ORDER BY t.cnt_likes DESC
+               """;
+
+        List<Film> films = jdbc.query(query, filmRowMapper, userId, friendId);
+
+        setAllGenresDirectorsAndLikes(films);
+
+        return films;
+    }
+
     /*
     Метод поиска рекомендованных фильмов:
     1. Первым запросом найдутся пользователи, которые ставили лайки тем же фильмам;
