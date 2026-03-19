@@ -137,7 +137,6 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    @Transactional
     public Review deleteLike(Long reviewId, Long userId) {
         String selectQuery = "SELECT is_like FROM reviews_reactions WHERE review_id = ? AND user_id = ?";
         String deleteQuery = "DELETE FROM reviews_reactions WHERE review_id = ? AND user_id = ?";
@@ -161,7 +160,6 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    @Transactional
     public Review addDislike(Long reviewId, Long userId) {
         String selectQuery = "SELECT is_like FROM reviews_reactions WHERE review_id = ? AND user_id = ?";
         String insertQuery = "INSERT INTO reviews_reactions (review_id, user_id, is_like) VALUES (?, ?, ?)";
@@ -195,7 +193,6 @@ public class ReviewDbStorage implements ReviewStorage {
     }
 
     @Override
-    @Transactional
     public Review deleteDislike(Long reviewId, Long userId) {
         String selectQuery = "SELECT is_like FROM reviews_reactions WHERE review_id = ? AND user_id = ?";
         String deleteQuery = "DELETE FROM reviews_reactions WHERE review_id = ? AND user_id = ?";
