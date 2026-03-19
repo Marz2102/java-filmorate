@@ -79,7 +79,7 @@ public class UserController {
     */
     @GetMapping("/{id}/recommendations")
     public ResponseEntity<List<FilmDto>> getRecommendedFilms(@PathVariable Long id) {
-        log.info("Вызван эндпоинт на получение списка рекомендованных фильмов для пользователя с ID: " + id);
+        log.info("Вызван эндпоинт на получение списка рекомендованных фильмов для пользователя с ID: {}", id);
         return ResponseEntity.ok(userService.getRecommendedFilms(id));
     }
 }
