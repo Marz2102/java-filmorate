@@ -19,7 +19,15 @@ public interface FilmStorage {
 
     Film deleteLike(Long filmId, Long userId);
 
-    List<Film> getMostLikedFilms(int count);
+    List<Film> getMostLikedFilms(int count, Long genreId, Integer year);
+
+    default List<Film> getMostLikedFilms(int count) {
+        return getMostLikedFilms(count, null, null);
+    }
+
+    default List<Film> getMostLikedFilms(int count, Long genreId) {
+        return getMostLikedFilms(count, genreId, null);
+    }
 
     List<Film> getFilmsByDirectorId(Long directorId, String sortParam);
 

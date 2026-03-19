@@ -17,7 +17,9 @@ import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -963,4 +965,131 @@ class FilmorateApplicationTests {
         assertThat(updatedReview).isNotNull();
         assertThat(updatedReview.getUseful()).isEqualTo(-1);
     }
+
+    @Test
+    public void testGetMostLikedFilmsFilterByYear() {
+        User user = userStorage.getUsers().get(0);
+
+        Film film2020 = new Film();
+        film2020.setName("Film 2020");
+        film2020.setDescription("Description");
+        film2020.setDuration(100);
+        film2020.setReleaseDate(LocalDate.of(2020, 6, 1));
+        film2020.setMpa(new Mpa(1L, "G"));
+        film2020 = filmStorage.addFilm(film2020);
+
+        Film film2021 = new Film();
+        film2021.setName("Film 2021");
+        film2021.setDescription("Description");
+        film2021.setDuration(100);
+        film2021.setReleaseDate(LocalDate.of(2021, 6, 1));
+        film2021.setMpa(new Mpa(1L, "G"));
+        film2021 = filmStorage.addFilm(film2021);
+
+        filmStorage.addLike(film2020.getId(), user.getId());
+
+        List<Film> films2020 = filmStorage.getMostLikedFilms(10, null, 2020);
+        assertEquals(1, films2020.size());
+        assertEquals("Film 2020", films2020.get(0).getName());
+
+        List<Film> films2021 = filmStorage.getMostLikedFilms(10, null, 2021);
+        assertEquals(1, films2021.size());
+        assertEquals("Film 2021", films2021.get(0).getName());
+    }
+
+    @Test
+    public void testGetMostLikedFilmsFilterByGenre() {
+        User user = userStorage.getUsers().get(0);
+
+        Film drama = new Film();
+        drama.setName("Drama Film");
+        drama.setDescription("Sad");
+        drama.setDuration(120);
+        drama.setReleaseDate(LocalDate.of(2020, 7, 1));
+        drama.setMpa(new Mpa(1L, "G"));
+        drama.setGenres(new HashSet<>(List.of(new Genre(2L, "Драма"))));
+        drama = filmStorage.addFilm(drama);
+
+        filmStorage.addLike(drama.getId(), user.getId());
+
+        List<Film> comedyFilms = filmStorage.getMostLikedFilms(10, 1L, null);
+        assertEquals(1, comedyFilms.size());
+        assertEquals("TestFilm", comedyFilms.get(0).getName());
+
+        List<Film> dramaFilms = filmStorage.getMostLikedFilms(10, 2L, null);
+        assertEquals(1, dramaFilms.size());
+        assertEquals("Drama Film", dramaFilms.get(0).getName());
+    }
+
+    @Test
+    public void testGetMostLikedFilmsFilterByGenreAndYear() {
+        User user = userStorage.getUsers().get(0);
+
+        Film comedy2020 = new Film();
+        comedy2020.setName("Comedy 2020");
+        comedy2020.setDescription("Funny 2020");
+        comedy2020.setDuration(100);
+        comedy2020.setReleaseDate(LocalDate.of(2020, 6, 1));
+        comedy2020.setMpa(new Mpa(1L, "G"));
+        comedy2020.setGenres(new HashSet<>(List.of(new Genre(1L, "Комедия"))));
+        comedy2020 = filmStorage.addFilm(comedy2020);
+
+        Film comedy2021 = new Film();
+        comedy2021.setName("Comedy 2021");
+        comedy2021.setDescription("Funny 2021");
+        comedy2021.setDuration(110);
+        comedy2021.setReleaseDate(LocalDate.of(2021, 5, 1));
+        comedy2021.setMpa(new Mpa(1L, "G"));
+        comedy2021.setGenres(new HashSet<>(List.of(new Genre(1L, "Комедия"))));
+        comedy2021 = filmStorage.addFilm(comedy2021);
+
+        filmStorage.addLike(comedy2020.getId(), user.getId());
+
+        List<Film> comedy2020films = filmStorage.getMostLikedFilms(10, 1L, 2020);
+        assertEquals(1, comedy2020films.size());
+        assertEquals("Comedy 2020", comedy2020films.get(0).getName());
+
+        List<Film> comedy2021films = filmStorage.getMostLikedFilms(10, 1L, 2021);
+        assertEquals(1, comedy2021films.size());
+        assertEquals("Comedy 2021", comedy2021films.get(0).getName());
+    }
+
+    @Test
+    public void testGetMostLikedFilmsSortByLikesCount() {
+        User user2 = new User();
+        user2.setEmail("user2@test.com");
+        user2.setLogin("user2");
+        user2.setName("User 2");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        User user1 = userStorage.getUsers().get(0);
+
+        Film film1 = new Film();
+        film1.setName("Film with 1 like");
+        film1.setDescription("Description");
+        film1.setDuration(100);
+        film1.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film1.setMpa(new Mpa(1L, "G"));
+        film1 = filmStorage.addFilm(film1);
+
+        Film film2 = new Film();
+        film2.setName("Film with 2 likes");
+        film2.setDescription("Description");
+        film2.setDuration(100);
+        film2.setReleaseDate(LocalDate.of(2020, 2, 1));
+        film2.setMpa(new Mpa(1L, "G"));
+        film2 = filmStorage.addFilm(film2);
+
+        filmStorage.addLike(film1.getId(), user1.getId());
+
+        filmStorage.addLike(film2.getId(), user1.getId());
+        filmStorage.addLike(film2.getId(), user2.getId());
+
+        List<Film> popular = filmStorage.getMostLikedFilms(10, null, null);
+
+        assertEquals("Film with 2 likes", popular.get(0).getName());
+        assertEquals(2, popular.get(0).getLikes().size());
+    }
+
 }
