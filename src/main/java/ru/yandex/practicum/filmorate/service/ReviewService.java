@@ -38,7 +38,7 @@ public class ReviewService {
                     .toList();
         }
 
-        return reviews.subList(0, Math.min(count, reviews.size()));
+        return reviews.stream().limit(count).toList();
     }
 
     public ReviewDto getReviewById(Long id) {
@@ -63,27 +63,32 @@ public class ReviewService {
     }
 
     public ReviewDto addLike(Long reviewId, Long userId) {
-        userService.getUserById(userId);
+        checkReviewAndUserExists(reviewId, userId);
 
         return ReviewMapper.mapReviewToReviewDto(reviewStorage.addLike(reviewId, userId));
     }
 
     public ReviewDto deleteLike(Long reviewId, Long userId) {
-        userService.getUserById(userId);
+        checkReviewAndUserExists(reviewId, userId);
 
         return ReviewMapper.mapReviewToReviewDto(reviewStorage.deleteLike(reviewId, userId));
     }
 
     public ReviewDto addDislike(Long reviewId, Long userId) {
-        userService.getUserById(userId);
+        checkReviewAndUserExists(reviewId, userId);
 
         return ReviewMapper.mapReviewToReviewDto(reviewStorage.addDislike(reviewId, userId));
     }
 
     public ReviewDto deleteDislike(Long reviewId, Long userId) {
-        userService.getUserById(userId);
+        checkReviewAndUserExists(reviewId, userId);
 
         return ReviewMapper.mapReviewToReviewDto(reviewStorage.deleteDislike(reviewId, userId));
+    }
+
+    private void checkReviewAndUserExists(Long reviewId, Long userId) {
+        userService.getUserById(userId);
+        getReviewById(reviewId);
     }
 
     public ReviewDto updateReview(ReviewUpdateDto reviewUpdateDto) {
