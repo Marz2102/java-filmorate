@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,9 @@ import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -374,6 +374,297 @@ class FilmorateApplicationTests {
     }
 
     @Test
+    public void testGetRecommendedFilms() {
+// User 1 (G)
+        User user1 = new User();
+        user1.setLogin("G");
+        user1.setEmail("test1@email.com");
+        user1.setName("123");
+        user1.setBirthday(LocalDate.of(2000, 2, 2));
+        user1 = userStorage.addUser(user1);
+
+// User 2 (test2)
+        User user2 = new User();
+        user2.setLogin("test2");
+        user2.setEmail("test2@email.com");
+        user2.setName("123");
+        user2.setBirthday(LocalDate.of(2000, 2, 2));
+        user2 = userStorage.addUser(user2);
+
+// User 3 (test3)
+        User user3 = new User();
+        user3.setLogin("test3");
+        user3.setEmail("test3@email.com");
+        user3.setName("123");
+        user3.setBirthday(LocalDate.of(2000, 2, 2));
+        user3 = userStorage.addUser(user3);
+
+// User 4 (test4)
+        User user4 = new User();
+        user4.setLogin("test4");
+        user4.setEmail("test4@email.com");
+        user4.setName("123");
+        user4.setBirthday(LocalDate.of(2000, 2, 2));
+        user4 = userStorage.addUser(user4);
+
+// User 5 (test5)
+        User user5 = new User();
+        user5.setLogin("test5");
+        user5.setEmail("test5@email.com");
+        user5.setName("123");
+        user5.setBirthday(LocalDate.of(2000, 2, 2));
+        user5 = userStorage.addUser(user5);
+
+// Film 2 (film2)
+        Film film2 = new Film();
+        film2.setName("film1");
+        film2.setReleaseDate(LocalDate.of(2000, 1, 1));  // произвольная дата
+        film2.setDuration(120);                           // произвольная длительность
+        film2 = filmStorage.addFilm(film2);
+
+// Film 3 (poke)
+        Film film3 = new Film();
+        film3.setName("poke");
+        film3.setReleaseDate(LocalDate.of(2001, 2, 2));
+        film3.setDuration(95);
+        film3 = filmStorage.addFilm(film3);
+
+// Film 4 (cube)
+        Film film4 = new Film();
+        film4.setName("cube");
+        film4.setReleaseDate(LocalDate.of(2002, 3, 3));
+        film4.setDuration(110);
+        film4 = filmStorage.addFilm(film4);
+
+// Film 5 (dark)
+        Film film5 = new Film();
+        film5.setName("dark");
+        film5.setReleaseDate(LocalDate.of(2003, 4, 4));
+        film5.setDuration(105);
+        film5 = filmStorage.addFilm(film5);
+
+// Film 6 (starwars)
+        Film film6 = new Film();
+        film6.setName("starwars");
+        film6.setReleaseDate(LocalDate.of(2004, 5, 5));
+        film6.setDuration(140);
+        film6 = filmStorage.addFilm(film6);
+
+// Film 7 (nigth)
+        Film film7 = new Film();
+        film7.setName("nigth");
+        film7.setReleaseDate(LocalDate.of(2005, 6, 6));
+        film7.setDuration(90);
+        film7 = filmStorage.addFilm(film7);
+
+// Film 8 (laser)
+        Film film8 = new Film();
+        film8.setName("laser");
+        film8.setReleaseDate(LocalDate.of(2006, 7, 7));
+        film8.setDuration(115);
+        film8 = filmStorage.addFilm(film8);
+
+// Film 9 (PSgamer)
+        Film film9 = new Film();
+        film9.setName("PSgamer");
+        film9.setReleaseDate(LocalDate.of(2007, 8, 8));
+        film9.setDuration(125);
+        film9 = filmStorage.addFilm(film9);
+
+// Film 10 (ixbt)
+        Film film10 = new Film();
+        film10.setName("ixbt");
+        film10.setReleaseDate(LocalDate.of(2008, 9, 9));
+        film10.setDuration(100);
+        film10 = filmStorage.addFilm(film10);
+
+// Film 11 (shiiit)
+        Film film11 = new Film();
+        film11.setName("shiiit");
+        film11.setReleaseDate(LocalDate.of(2009, 10, 10));
+        film11.setDuration(80);
+        film11 = filmStorage.addFilm(film11);
+
+// Film 12 (warhammer)
+        Film film12 = new Film();
+        film12.setName("warhammer");
+        film12.setReleaseDate(LocalDate.of(2010, 11, 11));
+        film12.setDuration(150);
+        film12 = filmStorage.addFilm(film12);
+
+// Film 13 (kingdom)
+        Film film13 = new Film();
+        film13.setName("kingdom");
+        film13.setReleaseDate(LocalDate.of(2011, 12, 12));
+        film13.setDuration(130);
+        film13 = filmStorage.addFilm(film13);
+
+// Film 14 (google)
+        Film film14 = new Film();
+        film14.setName("google");
+        film14.setReleaseDate(LocalDate.of(2012, 1, 13));
+        film14.setDuration(95);
+        film14 = filmStorage.addFilm(film14);
+
+// Film 15 (123)
+        Film film15 = new Film();
+        film15.setName("123");
+        film15.setReleaseDate(LocalDate.of(2013, 2, 14));
+        film15.setDuration(85);
+        film15 = filmStorage.addFilm(film15);
+
+// Film 16 (battlefront)
+        Film film16 = new Film();
+        film16.setName("battlefront");
+        film16.setReleaseDate(LocalDate.of(2014, 3, 15));
+        film16.setDuration(135);
+        film16 = filmStorage.addFilm(film16);
+
+// Film 17 (zombies)
+        Film film17 = new Film();
+        film17.setName("zombies");
+        film17.setReleaseDate(LocalDate.of(2015, 4, 16));
+        film17.setDuration(115);
+        film17 = filmStorage.addFilm(film17);
+
+// Film 18 (re9)
+        Film film18 = new Film();
+        film18.setName("re9");
+        film18.setReleaseDate(LocalDate.of(2016, 5, 17));
+        film18.setDuration(110);
+        film18 = filmStorage.addFilm(film18);
+
+// Film 19 (sistem of a down)
+        Film film19 = new Film();
+        film19.setName("sistem of a down");
+        film19.setReleaseDate(LocalDate.of(2017, 6, 18));
+        film19.setDuration(145);
+        film19 = filmStorage.addFilm(film19);
+
+// Film 20 (gogol)
+        Film film20 = new Film();
+        film20.setName("gogol");
+        film20.setReleaseDate(LocalDate.of(2018, 7, 19));
+        film20.setDuration(105);
+        film20 = filmStorage.addFilm(film20);
+
+// Film 21 (test)
+        Film film21 = new Film();
+        film21.setName("test");
+        film21.setReleaseDate(LocalDate.of(2019, 8, 20));
+        film21.setDuration(90);
+        film21 = filmStorage.addFilm(film21);
+
+// User 1 лайкает film2, film3, film4, film5
+        filmStorage.addLike(film2.getId(), user1.getId());
+        filmStorage.addLike(film3.getId(), user1.getId());
+        filmStorage.addLike(film5.getId(), user1.getId());
+        filmStorage.addLike(film4.getId(), user1.getId());
+
+// User 2 лайкает film2, film21
+        filmStorage.addLike(film2.getId(), user2.getId());
+        filmStorage.addLike(film21.getId(), user2.getId());
+
+// User 3 лайкает film18, film2, film3, film4
+        filmStorage.addLike(film2.getId(), user3.getId());
+        filmStorage.addLike(film3.getId(), user3.getId());
+        filmStorage.addLike(film4.getId(), user3.getId());
+        filmStorage.addLike(film19.getId(), user3.getId());
+
+// User 4 лайкает film6, film2, film3, film4, film5, film20
+        filmStorage.addLike(film6.getId(), user4.getId());
+        filmStorage.addLike(film2.getId(), user4.getId());
+        filmStorage.addLike(film3.getId(), user4.getId());
+        filmStorage.addLike(film4.getId(), user4.getId());
+        filmStorage.addLike(film5.getId(), user4.getId());
+        filmStorage.addLike(film20.getId(), user4.getId());
+
+// User 5 лайкает film15, film14, film16, film10
+        filmStorage.addLike(film15.getId(), user5.getId());
+        filmStorage.addLike(film14.getId(), user5.getId());
+        filmStorage.addLike(film16.getId(), user5.getId());
+        filmStorage.addLike(film10.getId(), user5.getId());
+
+        List<Film> list = filmStorage.getRecommendationsByUserId(user1.getId());
+
+        Assertions.assertThat(list)
+                .isNotEmpty()
+                .hasSize(4);
+
+        Assertions.assertThat(list)
+                .extracting(
+                        Film::getId,
+                        Film::getName
+                )
+                .contains(
+                        tuple(6L, "starwars"),
+                        tuple(20L, "gogol"),
+                        tuple(19L, "sistem of a down"),
+                        tuple(21L, "test")
+                );
+    }
+
+    @Test
+    public void testGetRecommendedFilmsEmptyList() {
+        User user2 = new User();
+        user2.setEmail("Test@test2.com");
+        user2.setLogin("test2");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        User user3 = new User();
+        user3.setEmail("Test@test3.com");
+        user3.setLogin("test3");
+        user3.setBirthday(LocalDate.of(2000, 1, 1));
+        User user4 = new User();
+        user4.setLogin("test4");
+        user4.setEmail("test4@email.com");
+        user4.setName("123");
+        user4.setBirthday(LocalDate.of(2000, 2, 2));
+        User user5 = new User();
+        user5.setLogin("test5");
+        user5.setEmail("test5@email.com");
+        user5.setName("123");
+        user5.setBirthday(LocalDate.of(2000, 2, 2));
+
+        Film film2 = new Film();
+        film2.setName("TestFilm2");
+        film2.setReleaseDate(LocalDate.of(1990, 1, 1));
+        film2.setDuration(100);
+        Film film3 = new Film();
+        film3.setName("TestFilm3");
+        film3.setDuration(100);
+        film3.setReleaseDate(LocalDate.of(1990, 1, 1));
+        Film film4 = new Film();
+        film4.setName("TestFilm4");
+        film4.setDuration(100);
+        film4.setReleaseDate(LocalDate.of(1990, 1, 1));
+        Film film5 = new Film();
+        film5.setName("TestFilm5");
+        film5.setDuration(100);
+        film5.setReleaseDate(LocalDate.of(1990, 1, 1));
+
+        user2 = userStorage.addUser(user2);
+        user3 = userStorage.addUser(user3);
+        user4 = userStorage.addUser(user4);
+        user5 = userStorage.addUser(user5);
+        film2 = filmStorage.addFilm(film2);
+        film3 = filmStorage.addFilm(film3);
+        film4 = filmStorage.addFilm(film4);
+        film5 = filmStorage.addFilm(film5);
+
+        filmStorage.addLike(film2.getId(), user2.getId());
+        filmStorage.addLike(film4.getId(), user2.getId());
+        filmStorage.addLike(film2.getId(), user3.getId());
+        filmStorage.addLike(film4.getId(), user3.getId());
+        filmStorage.addLike(film5.getId(), user4.getId());
+        filmStorage.addLike(film3.getId(), user4.getId());
+
+        List<Film> list = filmStorage.getRecommendationsByUserId(user2.getId());
+        Assertions.assertThat(list).isEmpty();
+
+        list = filmStorage.getRecommendationsByUserId(user5.getId());
+        Assertions.assertThat(list).isEmpty();
+    }
+
     public void testAddAndFindReview() {
         Review review = new Review();
         review.setContent("Отличный фильм");

@@ -274,6 +274,60 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    /*
+    Метод поиска рекомендованных фильмов:
+    1. Первым запросом найдутся пользователи, которые ставили лайки тем же фильмам;
+        Сформированная таблица сортируется по большему количеству совпадений.
+        Колонки выгружаются в лист и лист проверяется на пустоту.
+    2. Вторым запросом сформируется таблица с id фильмов пользователей из первого запроса,
+        фильтруются фильмы которые лайкал пользователь, id фильмов добавляются в LinkedHashSet для сохранения положения;
+    3. В return выгружаются фильмы по id из LinkedHashSet;
+     */
+    public List<Film> getRecommendationsByUserId(Long id) {
+
+        String similarUsersQuery = """
+                SELECT l2.user_id,
+                    COUNT(*) AS common_likes
+                FROM likes AS l1
+                JOIN likes AS l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ?
+                    AND l2.user_id != ?
+                GROUP BY l2.user_id
+                ORDER BY common_likes DESC
+                """;
+        String recommendFilmsQuery = """
+                SELECT film_id
+                FROM likes
+                WHERE user_id = ?
+                AND film_id NOT IN (
+                    SELECT film_id FROM likes WHERE user_id = ?
+                )
+                """;
+
+        List<Map<String, Object>> similarUsers = jdbc.queryForList(similarUsersQuery, id, id);
+
+        if (similarUsers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Set<Long> recommendedFilmIds = new LinkedHashSet<>();
+
+        similarUsers
+                .stream()
+                .map(user -> (Long) user.get("user_id"))
+                .map(userId -> jdbc.queryForList(recommendFilmsQuery, Long.class, userId, id))
+                .forEach(recommendedFilmIds::addAll);
+
+        if (recommendedFilmIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return recommendedFilmIds
+                .stream()
+                .map(filmId -> findById(filmId).get())
+                .toList();
+    }
+
     private Set<Genre> getGenresForFilmId(Long id) {
         String query = """
                 SELECT g.id, g.name
