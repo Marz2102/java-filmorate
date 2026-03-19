@@ -664,7 +664,7 @@ class FilmorateApplicationTests {
         list = filmStorage.getRecommendationsByUserId(user5.getId());
         Assertions.assertThat(list).isEmpty();
     }
-    
+
     public void testAddAndFindReview() {
         Review review = new Review();
         review.setContent("Отличный фильм");
