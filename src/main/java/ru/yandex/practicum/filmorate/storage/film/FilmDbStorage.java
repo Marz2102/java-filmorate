@@ -210,11 +210,6 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostLikedFilms(int count) {
-        return getMostLikedFilms(count, null, null);
-    }
-
-    @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
             SELECT f.id, f.name, f.description, f.release_date, f.duration,
