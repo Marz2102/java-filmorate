@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
+import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
@@ -31,20 +32,23 @@ class FilmorateApplicationTests {
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
     private final DirectorStorage directorStorage;
+    private final ReviewStorage reviewStorage;
 
     @Autowired
     FilmorateApplicationTests(
             @Qualifier("UserDao") final UserStorage userStorage,
-            @Qualifier("FilmDao") final  FilmStorage filmStorage,
+            @Qualifier("FilmDao") final FilmStorage filmStorage,
             @Qualifier("GenreDao") final GenreStorage genreStorage,
             @Qualifier("MpaDao") final MpaStorage mpaStorage,
-            @Qualifier("DirectorDao") final DirectorStorage directorStorage
+            @Qualifier("DirectorDao") final DirectorStorage directorStorage,
+            @Qualifier("ReviewDao") final ReviewStorage reviewStorage
     ) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.directorStorage = directorStorage;
+        this.reviewStorage = reviewStorage;
     }
 
     @BeforeEach
@@ -367,5 +371,265 @@ class FilmorateApplicationTests {
         assertEquals(2, films.size());
         assertEquals(oldFilm.getId(), films.get(0).getId()); // раньше дата
         assertEquals(newFilm.getId(), films.get(1).getId());
+    }
+
+    @Test
+    public void testAddAndFindReview() {
+        Review review = new Review();
+        review.setContent("Отличный фильм");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+
+        Review savedReview = reviewStorage.addReview(review);
+
+        assertThat(savedReview.getReviewId()).isNotNull();
+
+        Optional<Review> reviewOptional = reviewStorage.findById(savedReview.getReviewId());
+        assertThat(reviewOptional)
+                .isPresent()
+                .hasValueSatisfying(r -> {
+                    assertThat(r.getReviewId()).isEqualTo(savedReview.getReviewId());
+                    assertThat(r.getContent()).isEqualTo("Отличный фильм");
+                    assertThat(r.getIsPositive()).isEqualTo(true);
+                    assertThat(r.getFilmId()).isEqualTo(1L);
+                    assertThat(r.getUserId()).isEqualTo(1L);
+                });
+    }
+
+    @Test
+    public void testUpdateReview() {
+        Review review = new Review();
+        review.setContent("Нормальный фильм");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+
+        Review savedReview = reviewStorage.addReview(review);
+
+        savedReview.setContent("Фильм оказался слабым");
+        savedReview.setIsPositive(false);
+
+        reviewStorage.updateReview(savedReview);
+
+        Optional<Review> reviewOptional = reviewStorage.findById(savedReview.getReviewId());
+        assertThat(reviewOptional)
+                .isPresent()
+                .hasValueSatisfying(r -> {
+                    assertThat(r.getContent()).isEqualTo("Фильм оказался слабым");
+                    assertThat(r.getIsPositive()).isEqualTo(false);
+                });
+    }
+
+    @Test
+    public void testDeleteReview() {
+        Review review = new Review();
+        review.setContent("Удаляемый отзыв");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+
+        Review savedReview = reviewStorage.addReview(review);
+        reviewStorage.deleteReview(savedReview.getReviewId());
+
+        Optional<Review> reviewOptional = reviewStorage.findById(savedReview.getReviewId());
+        assertThat(reviewOptional).isNotPresent();
+    }
+
+    @Test
+    public void testGetReviews() {
+        Review review1 = new Review();
+        review1.setContent("Первый отзыв");
+        review1.setIsPositive(true);
+        review1.setFilmId(1L);
+        review1.setUserId(1L);
+        reviewStorage.addReview(review1);
+
+        User user2 = new User();
+        user2.setEmail("review2@test.com");
+        user2.setLogin("review2");
+        user2.setName("review2");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        Review review2 = new Review();
+        review2.setContent("Второй отзыв");
+        review2.setIsPositive(false);
+        review2.setFilmId(1L);
+        review2.setUserId(user2.getId());
+        reviewStorage.addReview(review2);
+
+        List<Review> reviews = reviewStorage.getReviews();
+        assertEquals(2, reviews.size());
+    }
+
+    @Test
+    public void testGetReviewsByFilmId() {
+        Review review1 = new Review();
+        review1.setContent("Отзыв к первому фильму");
+        review1.setIsPositive(true);
+        review1.setFilmId(1L);
+        review1.setUserId(1L);
+        reviewStorage.addReview(review1);
+
+        Film film2 = new Film();
+        film2.setName("Another film");
+        film2.setDescription("Another description");
+        film2.setDuration(120);
+        film2.setReleaseDate(LocalDate.of(2001, 1, 1));
+        film2.setMpa(new Mpa(1L, "G"));
+        film2 = filmStorage.addFilm(film2);
+
+        Review review2 = new Review();
+        review2.setContent("Отзыв ко второму фильму");
+        review2.setIsPositive(false);
+        review2.setFilmId(film2.getId());
+        review2.setUserId(1L);
+        reviewStorage.addReview(review2);
+
+        List<Review> firstFilmReviews = reviewStorage.getReviewsByFilmId(1L);
+        List<Review> secondFilmReviews = reviewStorage.getReviewsByFilmId(film2.getId());
+
+        assertEquals(1, firstFilmReviews.size());
+        assertEquals("Отзыв к первому фильму", firstFilmReviews.getFirst().getContent());
+
+        assertEquals(1, secondFilmReviews.size());
+        assertEquals("Отзыв ко второму фильму", secondFilmReviews.getFirst().getContent());
+    }
+
+    @Test
+    public void testAddLikeToReview() {
+        Review review = new Review();
+        review.setContent("Лайкаемый отзыв");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("like@test.com");
+        user2.setLogin("likeUser");
+        user2.setName("likeUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        Review updatedReview = reviewStorage.addLike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(1);
+    }
+
+    @Test
+    public void testDeleteLikeFromReview() {
+        Review review = new Review();
+        review.setContent("Отзыв с лайком");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("delete_like@test.com");
+        user2.setLogin("deleteLikeUser");
+        user2.setName("deleteLikeUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        reviewStorage.addLike(savedReview.getReviewId(), user2.getId());
+        Review updatedReview = reviewStorage.deleteLike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(0);
+    }
+
+    @Test
+    public void testAddDislikeToReview() {
+        Review review = new Review();
+        review.setContent("Дизлайкаемый отзыв");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("dislike@test.com");
+        user2.setLogin("dislikeUser");
+        user2.setName("dislikeUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        Review updatedReview = reviewStorage.addDislike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testDeleteDislikeFromReview() {
+        Review review = new Review();
+        review.setContent("Отзыв с дизлайком");
+        review.setIsPositive(false);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("delete_dislike@test.com");
+        user2.setLogin("deleteDislikeUser");
+        user2.setName("deleteDislikeUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        reviewStorage.addDislike(savedReview.getReviewId(), user2.getId());
+        Review updatedReview = reviewStorage.deleteDislike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(0);
+    }
+
+    @Test
+    public void testChangeDislikeToLike() {
+        Review review = new Review();
+        review.setContent("Смена реакции");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("change_reaction@test.com");
+        user2.setLogin("changeReactionUser");
+        user2.setName("changeReactionUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        reviewStorage.addDislike(savedReview.getReviewId(), user2.getId());
+        Review updatedReview = reviewStorage.addLike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(1);
+    }
+
+    @Test
+    public void testChangeLikeToDislike() {
+        Review review = new Review();
+        review.setContent("Обратная смена реакции");
+        review.setIsPositive(true);
+        review.setFilmId(1L);
+        review.setUserId(1L);
+        Review savedReview = reviewStorage.addReview(review);
+
+        User user2 = new User();
+        user2.setEmail("change_back@test.com");
+        user2.setLogin("changeBackUser");
+        user2.setName("changeBackUser");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        reviewStorage.addLike(savedReview.getReviewId(), user2.getId());
+        Review updatedReview = reviewStorage.addDislike(savedReview.getReviewId(), user2.getId());
+
+        assertThat(updatedReview).isNotNull();
+        assertThat(updatedReview.getUseful()).isEqualTo(-1);
     }
 }
