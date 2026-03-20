@@ -252,12 +252,21 @@ class FilmorateIntegrationTest {
                 null
         );
 
-        mockMvc.perform(post("/films")
+        String response = mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(film2020)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        mockMvc.perform(get("/films/popular?year=2020"))
+        FilmDto created = objectMapper.readValue(response, FilmDto.class);
+        Long filmId = created.getId();
+
+        mockMvc.perform(put("/films/{filmId}/like/{userId}", filmId, testUser.getId()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/films/popular?year=2020&count=100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.[?(@.name == '" + uniqueFilmName + "')]").exists());
     }
