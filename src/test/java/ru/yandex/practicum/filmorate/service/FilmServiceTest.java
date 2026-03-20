@@ -291,7 +291,6 @@ class FilmServiceTest {
     @Test
     void getMostLikedFilms_WithNegativeCount_ShouldThrowException() {
         assertThrows(ValidationException.class, () -> filmService.getMostLikedFilms(-1, null, null));
-
         verify(filmStorage, never()).getMostLikedFilms(anyInt(), any(), any());
     }
 
