@@ -101,4 +101,12 @@ public class FilmController {
         filmService.deleteFilm(filmId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<FilmDto>> searchFilms(
+            @RequestParam(name = "query") String query,
+            @RequestParam(name = "by") String by) {
+        log.info("Вызван эндпоинт на поиск списка фильмов по подстроке {}", query);
+        return ResponseEntity.ok(filmService.searchFilms(query, by));
+    }
 }

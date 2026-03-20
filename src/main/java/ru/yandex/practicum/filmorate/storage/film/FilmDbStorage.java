@@ -305,6 +305,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
@@ -325,6 +326,7 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    @Override
     public List<Film> getRecommendationsByUserId(Long id) {
 
         String similarUsersQuery = """
@@ -368,6 +370,46 @@ public class FilmDbStorage implements FilmStorage {
                 .stream()
                 .map(filmId -> findById(filmId).get())
                 .toList();
+    }
+
+    @Override
+    public List<Film> searchFilms(String substring, String queryParam) {
+        StringBuilder query = new StringBuilder("""
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
+                   r.id as mpa_id, r.name as mpa_name
+            FROM films as f
+            LEFT JOIN likes as l ON f.id = l.film_id
+            LEFT JOIN ratings as r ON f.rating_id = r.id
+            LEFT JOIN film_directors as fd ON fd.film_id = f.id
+            LEFT JOIN directors as d ON d.id = fd.director_id
+            WHERE
+            """);
+
+        List<String> params = new ArrayList<>();
+
+        if (queryParam.contains("director")) {
+            query.append(" d.name ILIKE ? ");
+            params.add('%' + substring + '%');
+            if (queryParam.contains("title")) {
+                query.append(" OR f.name ILIKE ? ");
+                params.add('%' + substring + '%');
+            }
+        } else {
+            query.append(" f.name ILIKE ? ");
+            params.add('%' + substring + '%');
+        }
+
+        query.append("""
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
+                     r.id, r.name
+            ORDER BY COUNT(l.user_id) DESC
+            """);
+
+        List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
+
+        setAllGenresDirectorsAndLikes(films);
+
+        return films;
     }
 
     private Set<Genre> getGenresForFilmId(Long id) {

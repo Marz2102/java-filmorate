@@ -150,6 +150,18 @@ public class FilmService {
         log.info("Фильм с id {} успешно удален", filmId);
     }
 
+    public List<FilmDto> searchFilms(String query, String queryParam) {
+        if (!queryParam.contains("director") && !queryParam.contains("title")) {
+            log.warn("Не указан параметр для поиска фильмов");
+            throw new ValidationException("Укажите параметр director или title для поиска фильмов");
+        }
+
+        return filmStorage.searchFilms(query, queryParam)
+                .stream()
+                .map(FilmMapper::mapFilmToFilmDto)
+                .toList();
+    }
+
     private void checkToFindByIds(Long filmId, Long userId) {
         getFilmById(filmId);
         userService.getUserById(userId);
