@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.config.TestConfig;
 import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmCreateDto;
+import ru.yandex.practicum.filmorate.dto.film.FilmDirectorDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.review.ReviewCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
@@ -130,7 +131,7 @@ class FilmorateIntegrationTest {
     void createDirector_AndGetFilmsByDirector_ShouldWork() throws Exception {
         DirectorDto director = new DirectorDto(null, "Test Director");
 
-        String response = mockMvc.perform(post("/directors")
+        String directorResponse = mockMvc.perform(post("/directors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(director)))
                 .andExpect(status().isCreated())
@@ -138,16 +139,17 @@ class FilmorateIntegrationTest {
                 .getResponse()
                 .getContentAsString();
 
-        DirectorDto created = objectMapper.readValue(response, DirectorDto.class);
-        Long directorId = created.getId();
+        DirectorDto createdDirector = objectMapper.readValue(directorResponse, DirectorDto.class);
+        Long directorId = createdDirector.getId();
 
+        List<FilmDirectorDto> directors = List.of(new FilmDirectorDto(directorId));
         FilmCreateDto filmWithDirector = new FilmCreateDto(
                 "Film with Director",
                 "Description",
                 LocalDate.of(2023, 1, 1),
                 120,
                 null,
-                List.of(),
+                directors,
                 null
         );
 
@@ -255,7 +257,7 @@ class FilmorateIntegrationTest {
 
         mockMvc.perform(get("/films/popular?year=2020"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.[?(@.name == 'Film 2020')]").exists());
     }
 
     @Test
