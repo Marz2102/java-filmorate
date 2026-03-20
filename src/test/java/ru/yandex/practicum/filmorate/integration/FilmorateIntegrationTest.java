@@ -240,8 +240,10 @@ class FilmorateIntegrationTest {
 
     @Test
     void getMostLikedFilms_WithFilters_ShouldWork() throws Exception {
+        String uniqueFilmName = "Film 2020 " + System.currentTimeMillis();
+
         FilmCreateDto film2020 = new FilmCreateDto(
-                "Film 2020",
+                uniqueFilmName,
                 "Description",
                 LocalDate.of(2020, 6, 1),
                 100,
@@ -257,7 +259,7 @@ class FilmorateIntegrationTest {
 
         mockMvc.perform(get("/films/popular?year=2020"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.[?(@.name == 'Film 2020')]").exists());
+                .andExpect(jsonPath("$.[?(@.name == '" + uniqueFilmName + "')]").exists());
     }
 
     @Test
