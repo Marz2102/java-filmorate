@@ -209,7 +209,6 @@ public class FilmDbStorage implements FilmStorage {
         return findById(filmId).orElse(null);
     }
 
-    // Метод с фильтрацией (твой из первой задачи)
     @Override
     public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
         StringBuilder query = new StringBuilder("""
@@ -296,7 +295,6 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    // Твой метод удаления из второй задачи
     @Override
     public void deleteFilm(Long filmId) {
         String query = "DELETE FROM films WHERE id = ?";
@@ -307,7 +305,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    // Метод коллеги (общие фильмы)
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
@@ -328,7 +325,6 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    // Метод коллеги (рекомендации)
     public List<Film> getRecommendationsByUserId(Long id) {
 
         String similarUsersQuery = """
