@@ -48,7 +48,7 @@ public class UserDbStorage implements UserStorage {
     public List<User> getUsers() {
         String query = "SELECT id, email, name, login, birthday_date FROM users";
 
-        List<User> users =  jdbc.query(query, userRowMapper);
+        List<User> users = jdbc.query(query, userRowMapper);
 
         Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
         users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
@@ -175,7 +175,7 @@ public class UserDbStorage implements UserStorage {
                 WHERE f.user_id = ?
                 """;
 
-        List<User> users =  jdbc.query(query, userRowMapper, userId);
+        List<User> users = jdbc.query(query, userRowMapper, userId);
 
         Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
         users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
@@ -194,12 +194,22 @@ public class UserDbStorage implements UserStorage {
                                          AND f2.user_id = ?
                 """;
 
-        List<User> users =  jdbc.query(query, userRowMapper, userId1, userId2);
+        List<User> users = jdbc.query(query, userRowMapper, userId1, userId2);
 
         Map<Long, Map<User, FriendshipStatus>> allFriends = getFriendsForAllUsers();
         users.forEach(user -> user.setFriends(allFriends.getOrDefault(user.getId(), Collections.emptyMap())));
 
         return users;
+    }
+
+    @Override
+    public void deleteUser(Long userId) {
+        String query = "DELETE FROM users WHERE id = ?";
+        int rowsDeleted = jdbc.update(query, userId);
+
+        if (rowsDeleted == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Пользователь с id " + userId + " не найден");
+        }
     }
 
     private Map<Long, Map<User, FriendshipStatus>> getFriendsForAllUsers() {

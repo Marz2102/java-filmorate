@@ -64,9 +64,11 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<FilmDto>> getMostLikedFilms(
-            @RequestParam(name = "count", required = false, defaultValue = "10") int count) {
-        log.info("Вызван эндпоинт на получение списка самых популярных фильмов");
-        return ResponseEntity.ok(filmService.getMostLikedFilms(count));
+            @RequestParam(name = "count", required = false, defaultValue = "10") int count,
+            @RequestParam(name = "genreId", required = false) Long genreId,
+            @RequestParam(name = "year", required = false) Integer year) {
+        log.info("Вызван эндпоинт на получение списка самых популярных фильмов с фильтрацией по жанру и году");
+        return ResponseEntity.ok(filmService.getMostLikedFilms(count, genreId, year));
     }
 
     @GetMapping("/director/{id}")
@@ -91,5 +93,12 @@ public class FilmController {
             @RequestParam(name = "friendId") Long friendId) {
         log.info("Вызван эндпоинт на получение списка общих фильмов для пользователей {} и {}", userId, friendId);
         return ResponseEntity.ok(filmService.getCommonFilms(userId, friendId));
+    }
+
+    @DeleteMapping("/{filmId}")
+    public ResponseEntity<Void> deleteFilm(@PathVariable Long filmId) {
+        log.info("Вызван эндпоинт на удаление фильма с id {}", filmId);
+        filmService.deleteFilm(filmId);
+        return ResponseEntity.noContent().build();
     }
 }

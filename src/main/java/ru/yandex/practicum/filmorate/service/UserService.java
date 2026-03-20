@@ -4,6 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
+import ru.yandex.practicum.filmorate.dto.user.UserDto;
+import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -11,12 +14,8 @@ import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
-import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
-import ru.yandex.practicum.filmorate.dto.user.UserDto;
-import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,17 +98,22 @@ public class UserService {
                 .toList();
     }
 
-    /*
-    Проверяется id, если пользователь не существует 404,
-     во всех прочих случаях возвращается список
-    */
     public List<FilmDto> getRecommendedFilms(Long id) {
         checkToFindById(id);
 
         return filmStorage.getRecommendationsByUserId(id)
                 .stream()
                 .map(FilmMapper::mapFilmToFilmDto)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public void deleteUser(Long userId) {
+        log.info("Вызван метод удаления пользователя с id {}", userId);
+
+        getUserById(userId);
+
+        userStorage.deleteUser(userId);
+        log.info("Пользователь с id {} успешно удален", userId);
     }
 
     private void checkToFindByIds(Long id, Long friendId) {

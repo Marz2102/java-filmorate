@@ -6,10 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
 
@@ -74,12 +74,17 @@ public class UserController {
         return ResponseEntity.ok(userService.getCommonFriends(id, otherId));
     }
 
-    /*
-    Эндпоинт запроса рекомендаций для пользователя основанный на его лайках
-    */
     @GetMapping("/{id}/recommendations")
     public ResponseEntity<List<FilmDto>> getRecommendedFilms(@PathVariable Long id) {
         log.info("Вызван эндпоинт на получение списка рекомендованных фильмов для пользователя с ID: {}", id);
         return ResponseEntity.ok(userService.getRecommendedFilms(id));
     }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
+        log.info("Вызван эндпоинт на удаление пользователя с id {}", userId);
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

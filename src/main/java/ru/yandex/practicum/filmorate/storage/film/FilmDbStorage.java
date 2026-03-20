@@ -7,12 +7,15 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.dto.user.LikesDto;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.MpaRowMapper;
-import ru.yandex.practicum.filmorate.dto.user.LikesDto;
 
 import javax.sql.DataSource;
 import java.sql.Date;
@@ -42,11 +45,11 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Optional<Film> findById(Long id) {
         String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
-               FROM films as f
-               LEFT JOIN ratings as r ON f.rating_id = r.id
-               WHERE f.id = ?
-               """;
+                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
+                FROM films as f
+                LEFT JOIN ratings as r ON f.rating_id = r.id
+                WHERE f.id = ?
+                """;
 
         try {
             Film film = jdbc.queryForObject(query, filmRowMapper, id);
@@ -207,19 +210,37 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public List<Film> getMostLikedFilms(int count) {
-        String query = """
-               SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
-               FROM films as f
-               LEFT JOIN (SELECT film_id, count(*) as cnt_likes
-                           FROM likes
-                           GROUP BY film_id) as t ON f.id = t.film_id
-               LEFT JOIN ratings as r ON f.rating_id = r.id
-               ORDER BY t.cnt_likes DESC
-               LIMIT ?
-               """;
+    public List<Film> getMostLikedFilms(int count, Long genreId, Integer year) {
+        StringBuilder query = new StringBuilder("""
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
+                   r.id as mpa_id, r.name as mpa_name,
+                   COUNT(l.user_id) as likes_count
+            FROM films as f
+            LEFT JOIN likes as l ON f.id = l.film_id
+            LEFT JOIN ratings as r ON f.rating_id = r.id
+            """);
 
-        List<Film> films = jdbc.query(query, filmRowMapper, count);
+        List<Object> params = new ArrayList<>();
+
+        if (genreId != null) {
+            query.append(" INNER JOIN film_genres as fg ON f.id = fg.film_id AND fg.genre_id = ?");
+            params.add(genreId);
+        }
+
+        if (year != null) {
+            query.append(" WHERE YEAR(f.release_date) = ?");
+            params.add(year);
+        }
+
+        query.append("""
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
+                     r.id, r.name
+            ORDER BY likes_count DESC
+            LIMIT ?
+            """);
+        params.add(count);
+
+        List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
 
         setAllGenresDirectorsAndLikes(films);
 
@@ -231,38 +252,38 @@ public class FilmDbStorage implements FilmStorage {
         String query;
         if ("likes".equals(sortParam)) {
             query = """
-              SELECT f.id,
-                     f.name,
-                     f.description,
-                     f.release_date,
-                     f.duration,
-                     r.id   AS mpa_id,
-                     r.name AS mpa_name
-              FROM films AS f
-              LEFT JOIN ratings AS r ON r.id = f.rating_id
-              JOIN film_directors AS fd ON fd.film_id = f.id
-              JOIN directors AS d ON d.id = fd.director_id
-              LEFT JOIN likes l ON l.film_id = f.id
-              WHERE d.id = ?
-              GROUP BY f.id, f.name, f.description, f.release_date, f.duration, r.id, r.name
-              ORDER BY COUNT(l.user_id) DESC
-              """;
+                    SELECT f.id,
+                           f.name,
+                           f.description,
+                           f.release_date,
+                           f.duration,
+                           r.id   AS mpa_id,
+                           r.name AS mpa_name
+                    FROM films AS f
+                    LEFT JOIN ratings AS r ON r.id = f.rating_id
+                    JOIN film_directors AS fd ON fd.film_id = f.id
+                    JOIN directors AS d ON d.id = fd.director_id
+                    LEFT JOIN likes l ON l.film_id = f.id
+                    WHERE d.id = ?
+                    GROUP BY f.id, f.name, f.description, f.release_date, f.duration, r.id, r.name
+                    ORDER BY COUNT(l.user_id) DESC
+                    """;
         } else if ("year".equals(sortParam)) {
             query = """
-              SELECT f.id,
-                     f.name,
-                     f.description,
-                     f.release_date,
-                     f.duration,
-                     r.id   AS mpa_id,
-                     r.name AS mpa_name
-              FROM films AS f
-              LEFT JOIN ratings AS r ON r.id = f.rating_id
-              JOIN film_directors AS fd ON fd.film_id = f.id
-              JOIN directors AS d ON d.id = fd.director_id
-              WHERE d.id = ?
-              ORDER BY f.release_date
-              """;
+                    SELECT f.id,
+                           f.name,
+                           f.description,
+                           f.release_date,
+                           f.duration,
+                           r.id   AS mpa_id,
+                           r.name AS mpa_name
+                    FROM films AS f
+                    LEFT JOIN ratings AS r ON r.id = f.rating_id
+                    JOIN film_directors AS fd ON fd.film_id = f.id
+                    JOIN directors AS d ON d.id = fd.director_id
+                    WHERE d.id = ?
+                    ORDER BY f.release_date
+                    """;
         } else {
             throw new IllegalArgumentException("Unknown sort param: " + sortParam);
         }
@@ -272,6 +293,16 @@ public class FilmDbStorage implements FilmStorage {
         setAllGenresDirectorsAndLikes(films);
 
         return films;
+    }
+
+    @Override
+    public void deleteFilm(Long filmId) {
+        String query = "DELETE FROM films WHERE id = ?";
+        int rowsDeleted = jdbc.update(query, filmId);
+
+        if (rowsDeleted == 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Фильм с id " + filmId + " не найден");
+        }
     }
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
@@ -294,15 +325,6 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    /*
-    Метод поиска рекомендованных фильмов:
-    1. Первым запросом найдутся пользователи, которые ставили лайки тем же фильмам;
-        Сформированная таблица сортируется по большему количеству совпадений.
-        Колонки выгружаются в лист и лист проверяется на пустоту.
-    2. Вторым запросом сформируется таблица с id фильмов пользователей из первого запроса,
-        фильтруются фильмы которые лайкал пользователь, id фильмов добавляются в LinkedHashSet для сохранения положения;
-    3. В return выгружаются фильмы по id из LinkedHashSet;
-     */
     public List<Film> getRecommendationsByUserId(Long id) {
 
         String similarUsersQuery = """
@@ -377,14 +399,14 @@ public class FilmDbStorage implements FilmStorage {
         Map<Long, Set<Genre>> filmsGenres = new HashMap<>();
 
         jdbc.query(query, (rs) -> {
-           Long filmId = rs.getLong("film_id");
-           Set<Genre> genres = filmsGenres.computeIfAbsent(filmId, k -> new HashSet<>());
+            Long filmId = rs.getLong("film_id");
+            Set<Genre> genres = filmsGenres.computeIfAbsent(filmId, k -> new HashSet<>());
 
-           Genre genre = new Genre();
-           genre.setId(rs.getLong("genre_id"));
-           genre.setName(rs.getString("name"));
+            Genre genre = new Genre();
+            genre.setId(rs.getLong("genre_id"));
+            genre.setName(rs.getString("name"));
 
-           genres.add(genre);
+            genres.add(genre);
         });
 
         return filmsGenres;
