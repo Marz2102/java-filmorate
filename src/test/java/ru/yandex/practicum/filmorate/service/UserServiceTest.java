@@ -198,6 +198,10 @@ class UserServiceTest {
 
     @Test
     void addFriend_SameUser_ShouldThrowException() {
+        User user = new User();
+        user.setId(1L);
+        when(userStorage.findById(1L)).thenReturn(Optional.of(user));
+
         assertThrows(ValidationException.class, () -> userService.addFriend(1L, 1L));
 
         verify(userStorage, never()).addFriend(anyLong(), anyLong());
@@ -227,6 +231,10 @@ class UserServiceTest {
 
     @Test
     void deleteFriend_SameUser_ShouldThrowException() {
+        User user = new User();
+        user.setId(1L);
+        when(userStorage.findById(1L)).thenReturn(Optional.of(user));
+
         assertThrows(ValidationException.class, () -> userService.deleteFriend(1L, 1L));
 
         verify(userStorage, never()).deleteFriend(anyLong(), anyLong());
