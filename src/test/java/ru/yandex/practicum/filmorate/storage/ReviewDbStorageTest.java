@@ -49,7 +49,7 @@ class ReviewDbStorageTest {
         testUser.setLogin("test");
         testUser.setName("TestName");
         testUser.setBirthday(LocalDate.of(2000, 1, 1));
-        userStorage.addUser(testUser);
+        testUser = userStorage.addUser(testUser);
 
         testFilm = new Film();
         testFilm.setName("TestFilm");
@@ -57,7 +57,7 @@ class ReviewDbStorageTest {
         testFilm.setDuration(100);
         testFilm.setReleaseDate(LocalDate.of(1990, 12, 12));
         testFilm.setMpa(new Mpa(1L, "G"));
-        filmStorage.addFilm(testFilm);
+        testFilm = filmStorage.addFilm(testFilm);
     }
 
     @Test
@@ -65,8 +65,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Great movie!");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
 
         Review saved = reviewStorage.addReview(review);
 
@@ -80,8 +80,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Great movie!");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         Optional<Review> reviewOptional = reviewStorage.findById(saved.getReviewId());
@@ -99,8 +99,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Original content");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         saved.setContent("Updated content");
@@ -121,8 +121,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("To delete");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         reviewStorage.deleteReview(saved.getReviewId());
@@ -133,18 +133,26 @@ class ReviewDbStorageTest {
 
     @Test
     void getReviews_ShouldReturnAllReviews() {
+        Film secondFilm = new Film();
+        secondFilm.setName("Second Film");
+        secondFilm.setDescription("Second Description");
+        secondFilm.setDuration(100);
+        secondFilm.setReleaseDate(LocalDate.of(2021, 1, 1));
+        secondFilm.setMpa(new Mpa(1L, "G"));
+        secondFilm = filmStorage.addFilm(secondFilm);
+
         Review review1 = new Review();
         review1.setContent("First review");
         review1.setIsPositive(true);
-        review1.setFilmId(1L);
-        review1.setUserId(1L);
+        review1.setFilmId(testFilm.getId());
+        review1.setUserId(testUser.getId());
         reviewStorage.addReview(review1);
 
         Review review2 = new Review();
         review2.setContent("Second review");
         review2.setIsPositive(false);
-        review2.setFilmId(1L);
-        review2.setUserId(1L);
+        review2.setFilmId(secondFilm.getId());
+        review2.setUserId(testUser.getId());
         reviewStorage.addReview(review2);
 
         List<Review> reviews = reviewStorage.getReviews();
@@ -156,8 +164,8 @@ class ReviewDbStorageTest {
         Review review1 = new Review();
         review1.setContent("Review for film 1");
         review1.setIsPositive(true);
-        review1.setFilmId(1L);
-        review1.setUserId(1L);
+        review1.setFilmId(testFilm.getId());
+        review1.setUserId(testUser.getId());
         reviewStorage.addReview(review1);
 
         Film film2 = new Film();
@@ -172,10 +180,10 @@ class ReviewDbStorageTest {
         review2.setContent("Review for film 2");
         review2.setIsPositive(false);
         review2.setFilmId(film2.getId());
-        review2.setUserId(1L);
+        review2.setUserId(testUser.getId());
         reviewStorage.addReview(review2);
 
-        List<Review> film1Reviews = reviewStorage.getReviewsByFilmId(1L);
+        List<Review> film1Reviews = reviewStorage.getReviewsByFilmId(testFilm.getId());
         List<Review> film2Reviews = reviewStorage.getReviewsByFilmId(film2.getId());
 
         assertEquals(1, film1Reviews.size());
@@ -189,8 +197,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Liked review");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
@@ -198,7 +206,7 @@ class ReviewDbStorageTest {
         user2.setLogin("user2");
         user2.setName("User 2");
         user2.setBirthday(LocalDate.of(2000, 1, 1));
-        userStorage.addUser(user2);
+        user2 = userStorage.addUser(user2);
 
         Review updated = reviewStorage.addLike(saved.getReviewId(), user2.getId());
 
@@ -210,8 +218,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Review with like");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
@@ -232,8 +240,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Disliked review");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
@@ -253,8 +261,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Review with dislike");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
@@ -275,8 +283,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Change reaction");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
@@ -297,8 +305,8 @@ class ReviewDbStorageTest {
         Review review = new Review();
         review.setContent("Change reaction back");
         review.setIsPositive(true);
-        review.setFilmId(1L);
-        review.setUserId(1L);
+        review.setFilmId(testFilm.getId());
+        review.setUserId(testUser.getId());
         Review saved = reviewStorage.addReview(review);
 
         User user2 = new User();
