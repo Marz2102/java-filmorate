@@ -140,19 +140,19 @@ class FilmServiceTest {
 
     @Test
     void addFilm_WithGenres_ShouldSetGenres() {
-        Set<Long> genreIds = Set.of(1L, 2L);
+        List<FilmGenreDto> genres = List.of(new FilmGenreDto(1L), new FilmGenreDto(2L));
         FilmCreateDto dtoWithGenres = new FilmCreateDto(
                 "Inception",
                 "Description",
                 LocalDate.of(2010, 7, 16),
                 148,
-                List.of(),
+                genres,
                 null,
                 null
         );
 
-        when(genreService.getGenreById(1L)).thenReturn(new ru.yandex.practicum.filmorate.dto.genre.GenreDto(1L, "Комедия"));
-        when(genreService.getGenreById(2L)).thenReturn(new ru.yandex.practicum.filmorate.dto.genre.GenreDto(2L, "Драма"));
+        when(genreService.getGenreById(1L)).thenReturn(new GenreDto(1L, "Комедия"));
+        when(genreService.getGenreById(2L)).thenReturn(new GenreDto(2L, "Драма"));
         when(filmStorage.addFilm(any(Film.class))).thenReturn(film);
 
         filmService.addFilm(dtoWithGenres);
@@ -163,17 +163,18 @@ class FilmServiceTest {
 
     @Test
     void addFilm_WithDirectors_ShouldSetDirectors() {
+        List<FilmDirectorDto> directors = List.of(new FilmDirectorDto(1L));
         FilmCreateDto dtoWithDirectors = new FilmCreateDto(
                 "Inception",
                 "Description",
                 LocalDate.of(2010, 7, 16),
                 148,
                 null,
-                List.of(),
+                directors,
                 null
         );
 
-        when(directorService.getDirectorById(1L)).thenReturn(new ru.yandex.practicum.filmorate.dto.director.DirectorDto(1L, "Nolan"));
+        when(directorService.getDirectorById(1L)).thenReturn(new DirectorDto(1L, "Nolan"));
         when(filmStorage.addFilm(any(Film.class))).thenReturn(film);
 
         filmService.addFilm(dtoWithDirectors);
@@ -291,6 +292,7 @@ class FilmServiceTest {
     @Test
     void getMostLikedFilms_WithNegativeCount_ShouldThrowException() {
         assertThrows(ValidationException.class, () -> filmService.getMostLikedFilms(-1, null, null));
+
         verify(filmStorage, never()).getMostLikedFilms(anyInt(), any(), any());
     }
 
