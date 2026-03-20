@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.yandex.practicum.filmorate.dto.film.FilmCreateDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmUpdateDto;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.LocalDate;
@@ -161,12 +162,15 @@ class FilmControllerTest {
                 null
         );
 
+        when(filmService.addFilm(any(FilmCreateDto.class)))
+                .thenThrow(new ValidationException("Дата релиза не может быть раньше 1895-12-28"));
+
         mockMvc.perform(post("/films")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(status().isBadRequest());
 
-        verify(filmService, never()).addFilm(any());
+        verify(filmService).addFilm(any(FilmCreateDto.class));
     }
 
     @Test
