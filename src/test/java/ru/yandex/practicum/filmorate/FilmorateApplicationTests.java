@@ -11,6 +11,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.director.DirectorStorage;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
@@ -37,6 +38,7 @@ class FilmorateApplicationTests {
     private final MpaStorage mpaStorage;
     private final DirectorStorage directorStorage;
     private final ReviewStorage reviewStorage;
+    private final EventStorage eventStorage;
 
     @Autowired
     FilmorateApplicationTests(
@@ -45,7 +47,8 @@ class FilmorateApplicationTests {
             @Qualifier("GenreDao") final GenreStorage genreStorage,
             @Qualifier("MpaDao") final MpaStorage mpaStorage,
             @Qualifier("DirectorDao") final DirectorStorage directorStorage,
-            @Qualifier("ReviewDao") final ReviewStorage reviewStorage
+            @Qualifier("ReviewDao") final ReviewStorage reviewStorage,
+            @Qualifier("EventDao") final EventStorage eventStorage
     ) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
@@ -53,6 +56,7 @@ class FilmorateApplicationTests {
         this.mpaStorage = mpaStorage;
         this.directorStorage = directorStorage;
         this.reviewStorage = reviewStorage;
+        this.eventStorage = eventStorage;
     }
 
     @BeforeEach
@@ -1154,4 +1158,58 @@ class FilmorateApplicationTests {
         assertEquals(2, popular.get(0).getLikes().size());
     }
 
+    @Test
+    public void testGetEventsFromDB() {
+        User user2 = new User();
+        user2.setEmail("user2@test.com");
+        user2.setLogin("user2");
+        user2.setName("User 2");
+        user2.setBirthday(LocalDate.of(2000, 1, 1));
+        user2 = userStorage.addUser(user2);
+
+        Film film1 = new Film();
+        film1.setName("Film with 1 like");
+        film1.setDescription("Description");
+        film1.setDuration(100);
+        film1.setReleaseDate(LocalDate.of(2020, 1, 1));
+        film1.setMpa(new Mpa(1L, "G"));
+        film1 = filmStorage.addFilm(film1);
+
+        Review review = new Review();
+        review.setContent("createReview");
+        review.setIsPositive(true);
+        review.setUserId(2L);
+        review.setFilmId(film1.getId());
+
+        filmStorage.addLike(film1.getId(), user2.getId());
+        filmStorage.deleteLike(film1.getId(), user2.getId());
+        userStorage.addFriend(2L,1L);
+        userStorage.deleteFriend(2L, 1L);
+
+        review = reviewStorage.addReview(review);
+        review.setContent("updateReview");
+
+        reviewStorage.updateReview(review);
+        reviewStorage.deleteReview(review.getReviewId());
+
+        List<Event> list = eventStorage.getEvents(user2.getId());
+        Assertions.assertThat(list)
+                .isNotEmpty()
+                .hasSize(7);
+
+        Assertions.assertThat(list)
+                .extracting(
+                        Event::getEventType,
+                        Event::getOperation
+                )
+                .contains(
+                        tuple(EventType.LIKE, Operation.ADD),
+                        tuple(EventType.LIKE, Operation.REMOVE),
+                        tuple(EventType.FRIEND, Operation.ADD),
+                        tuple(EventType.FRIEND, Operation.REMOVE),
+                        tuple(EventType.REVIEW, Operation.ADD),
+                        tuple(EventType.REVIEW, Operation.UPDATE),
+                        tuple(EventType.REVIEW, Operation.REMOVE)
+                );
+    }
 }

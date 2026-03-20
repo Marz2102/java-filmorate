@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.event.EventDto;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
@@ -85,6 +86,12 @@ public class UserController {
         log.info("Вызван эндпоинт на удаление пользователя с id {}", userId);
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/feed")
+    public ResponseEntity<List<EventDto>> getFeed(@PathVariable Long id) {
+        log.info("Вызван эндпоинт на получение списка событий пользователя id:{}", id);
+        return ResponseEntity.ok(userService.getFeed(id));
     }
 
 }

@@ -4,18 +4,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.event.EventDto;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.EventMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,11 +31,14 @@ public class UserService {
 
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    private final EventStorage eventStorage;
 
     public UserService(@Qualifier("UserDao") final UserStorage userStorage,
-                       @Qualifier("FilmDao") final FilmStorage filmStorage) {
+                       @Qualifier("FilmDao") final FilmStorage filmStorage,
+                       @Qualifier("EventDao") final EventStorage eventStorage) {
         this.userStorage = userStorage;
         this.filmStorage = filmStorage;
+        this.eventStorage = eventStorage;
     }
 
     public UserDto getUserById(Long id) {
@@ -114,6 +125,27 @@ public class UserService {
 
         userStorage.deleteUser(userId);
         log.info("Пользователь с id {} успешно удален", userId);
+    }
+
+    public List<EventDto> getFeed(Long userId) {
+        User user = userStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id - " + userId + " не найден"));
+
+        Set<Long> usersId = user.getFriends().keySet().stream()
+                .map(User::getId)
+                .collect(Collectors.toSet());
+
+        usersId.add(userId);
+
+        List<Event> events = new ArrayList<>();
+        usersId.stream()
+                .map(eventStorage::getEvents)
+                .forEach(events::addAll);
+
+        return events.stream()
+                .map(EventMapper::mapEventToEventDto)
+                .sorted(Comparator.comparing(EventDto::getTimestamp))//.reversed())
+                .toList();
     }
 
     private void checkToFindByIds(Long id, Long friendId) {
