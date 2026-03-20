@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.dto.user;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class UserCreateDto {
     @NotBlank
     @Email(message = "Введите почту в корректном формате")
