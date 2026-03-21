@@ -82,17 +82,6 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
-    private void setAllGenresDirectorsAndLikes(List<Film> films) {
-        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
-        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
-
-        Map<Long, Set<Director>> allDirectors = getDirectorsForAllFilms();
-        films.forEach(film -> film.setDirectors(allDirectors.getOrDefault(film.getId(), Collections.emptySet())));
-
-        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
-        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
-    }
-
     @Override
     public Film addFilm(Film film) {
         String query = "INSERT INTO films (name, description, release_date, duration, rating_id) VALUES (?, ?, ?, ?, ?)";
@@ -410,6 +399,17 @@ public class FilmDbStorage implements FilmStorage {
         setAllGenresDirectorsAndLikes(films);
 
         return films;
+    }
+
+    private void setAllGenresDirectorsAndLikes(List<Film> films) {
+        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Set<Director>> allDirectors = getDirectorsForAllFilms();
+        films.forEach(film -> film.setDirectors(allDirectors.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
+        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
     }
 
     private Set<Genre> getGenresForFilmId(Long id) {

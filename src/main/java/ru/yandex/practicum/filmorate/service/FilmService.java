@@ -151,9 +151,17 @@ public class FilmService {
     }
 
     public List<FilmDto> searchFilms(String query, String queryParam) {
-        if (!queryParam.contains("director") && !queryParam.contains("title")) {
+        if (queryParam == null || queryParam.isBlank()) {
             log.warn("Не указан параметр для поиска фильмов");
             throw new ValidationException("Укажите параметр director или title для поиска фильмов");
+        }
+
+        for (String param : queryParam.split(",")) {
+            param = param.trim();
+            if (!"director".equals(param) && !"title".equals(param)) {
+                log.warn("Не указан параметр для поиска фильмов");
+                throw new ValidationException("Параметр для поиска фильмов может содержать только director или title");
+            }
         }
 
         return filmStorage.searchFilms(query, queryParam)
