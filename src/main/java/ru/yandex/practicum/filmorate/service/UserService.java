@@ -144,7 +144,7 @@ public class UserService {
 
         return events.stream()
                 .map(EventMapper::mapEventToEventDto)
-                .sorted(Comparator.comparing(EventDto::getTimestamp))//.reversed())
+                .sorted(Comparator.comparing(EventDto::getTimestamp))
                 .toList();
     }
 
