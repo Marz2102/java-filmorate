@@ -395,5 +395,4 @@ class FilmServiceTest {
 
         verify(filmStorage, never()).searchFilms(anyString(), anyString());
     }
-
 }
