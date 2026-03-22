@@ -15,7 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -234,7 +234,7 @@ class UserDbStorageTest {
         assertThat(deletedUser).isNotPresent();
 
         List<User> friendsOfFriend = userStorage.getFriends(friend.getId());
-        assertThat(friendsOfFriend).isEmpty();
+        assertEquals(0, friendsOfFriend.size());
     }
 
     @Test
