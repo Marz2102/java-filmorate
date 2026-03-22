@@ -523,4 +523,54 @@ class FilmDbStorageTest {
         List<Film> result = filmStorage.searchFilms("nonexistentmovie", "title");
         assertThat(result).isEmpty();
     }
+
+    @Test
+    void getMostLikedFilms_WithGenreOnlyAndNoLikes_ShouldReturnEmpty() {
+        Film newFilm = new Film();
+        newFilm.setName("No Likes Film");
+        newFilm.setDescription("Description");
+        newFilm.setDuration(100);
+        newFilm.setReleaseDate(LocalDate.of(2023, 1, 1));
+        newFilm.setMpa(new Mpa(1L, "G"));
+        newFilm.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
+        filmStorage.addFilm(newFilm);
+
+        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
+
+        assertThat(result).isNotEmpty();
+        assertThat(result.stream().noneMatch(f -> f.getName().equals("No Likes Film"))).isTrue();
+    }
+
+    @Test
+    void getMostLikedFilms_WithYearAndNoLikes_ShouldReturnEmpty() {
+        Film newFilm = new Film();
+        newFilm.setName("No Likes Film 2023");
+        newFilm.setDescription("Description");
+        newFilm.setDuration(100);
+        newFilm.setReleaseDate(LocalDate.of(2023, 6, 1));
+        newFilm.setMpa(new Mpa(1L, "G"));
+        filmStorage.addFilm(newFilm);
+
+        List<Film> result = filmStorage.getMostLikedFilms(10, null, 2023);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getLikes()).isEmpty();
+    }
+
+    @Test
+    void getFilmsByDirectorId_WithInvalidSortParam_ShouldThrowException() {
+        Director director = new Director();
+        director.setName("Test Director");
+        director = directorStorage.addDirector(director);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                filmStorage.getFilmsByDirectorId(director.getId(), "invalid"));
+    }
+
+    @Test
+    void searchFilms_WithEmptyDirectorBy_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.searchFilms("test", "director");
+        assertThat(result).isEmpty();
+    }
+
 }
