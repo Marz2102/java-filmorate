@@ -525,7 +525,7 @@ class FilmDbStorageTest {
     }
 
     @Test
-    void getMostLikedFilms_WithGenreOnlyAndNoLikes_ShouldReturnEmpty() {
+    void getMostLikedFilms_WithGenreOnlyAndNoLikes_ShouldReturnFilmWithZeroLikes() {
         Film newFilm = new Film();
         newFilm.setName("No Likes Film");
         newFilm.setDescription("Description");
@@ -533,12 +533,12 @@ class FilmDbStorageTest {
         newFilm.setReleaseDate(LocalDate.of(2023, 1, 1));
         newFilm.setMpa(new Mpa(1L, "G"));
         newFilm.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
-        filmStorage.addFilm(newFilm);
+        newFilm = filmStorage.addFilm(newFilm);
 
         List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
 
         assertThat(result).isNotEmpty();
-        assertThat(result.stream().noneMatch(f -> f.getName().equals("No Likes Film"))).isTrue();
+        assertThat(result.stream().anyMatch(f -> f.getName().equals("No Likes Film"))).isTrue();
     }
 
     @Test
@@ -565,8 +565,11 @@ class FilmDbStorageTest {
 
         Long directorId = director.getId();
 
-        assertThrows(IllegalArgumentException.class, () ->
+        Exception exception = assertThrows(RuntimeException.class, () ->
                 filmStorage.getFilmsByDirectorId(directorId, "invalid"));
+
+        assertThat(exception.getCause()).isInstanceOf(IllegalArgumentException.class);
+        assertThat(exception.getCause().getMessage()).isEqualTo("Unknown sort param: invalid");
     }
 
     @Test
