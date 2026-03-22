@@ -254,4 +254,13 @@ class UserControllerTest {
 
         verify(userService).deleteUser(1L);
     }
+
+    @Test
+    void getUserFeed_ShouldReturnList() throws Exception {
+        when(userService.getFeed(1L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/users/1/feed"))
+                .andExpect(status().isOk());
+    }
+
 }
