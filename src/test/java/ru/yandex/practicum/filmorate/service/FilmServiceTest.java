@@ -400,12 +400,6 @@ class FilmServiceTest {
     void searchFilms_WithEmptyQuery_ShouldThrowValidationException() {
         assertThrows(ValidationException.class, () ->
                 filmService.searchFilms("", "title"));
-    }
-
-    @Test
-    void searchFilms_WithEmptyQuery_ShouldThrowValidationException() {
-        assertThrows(ValidationException.class, () ->
-                filmService.searchFilms("", "title"));
 
         verify(filmStorage, never()).searchFilms(anyString(), anyString());
     }
