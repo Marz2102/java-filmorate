@@ -1,25 +1,26 @@
-/*
-drop table if exists users cascade;
-drop table if exists films cascade;
-drop table if exists friends cascade;
-drop table if exists likes cascade;
-drop table if exists genres cascade;
-drop table if exists film_genres cascade;
-drop table if exists ratings cascade;
-drop table if exists directors cascade;
-drop table if exists film_directors cascade;
-drop table if exists film_reviews cascade;
-drop table if exists events cascade;
-*/
+MERGE INTO genres (name) KEY(name) VALUES
+       ('Комедия'),
+       ('Драма'),
+       ('Мультфильм'),
+       ('Триллер'),
+       ('Документальный'),
+       ('Боевик');
+
+MERGE INTO ratings (name) KEY(name) VALUES
+       ('G'),
+       ('PG'),
+       ('PG-13'),
+       ('R'),
+       ('NC-17');
 
 CREATE TABLE IF NOT EXISTS ratings (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(100),
     name VARCHAR(100),
     login VARCHAR(100),
@@ -29,14 +30,14 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS directors (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS films (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
     description VARCHAR(200),
     release_date DATE,
@@ -77,7 +78,7 @@ CREATE TABLE IF NOT EXISTS likes (
 );
 
 CREATE TABLE IF NOT EXISTS genres (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -92,7 +93,7 @@ CREATE TABLE IF NOT EXISTS film_genres (
 );
 
 CREATE TABLE IF NOT EXISTS film_reviews (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     content TEXT,
     is_positive BOOLEAN NOT NULL,
     user_id BIGINT NOT NULL,
@@ -106,13 +107,9 @@ CREATE TABLE IF NOT EXISTS film_reviews (
 );
 
 CREATE TABLE IF NOT EXISTS events (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     event_type VARCHAR(30) NOT NULL,
     operation VARCHAR(40) NOT NULL,
-    /*
-    event_type ENUM('LIKE', 'REVIEW', 'FRIEND') NOT NULL,
-    operation  ENUM('ADD', 'UPDATE', 'REMOVE') NOT NULL,
-    */
     user_id BIGINT NOT NULL,
     entity_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -128,4 +125,4 @@ CREATE TABLE IF NOT EXISTS reviews_reactions (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (review_id) REFERENCES film_reviews(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-)
+);
