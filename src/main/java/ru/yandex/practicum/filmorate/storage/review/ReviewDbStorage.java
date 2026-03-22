@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.review;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -7,7 +8,10 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.mapper.ReviewRowMapper;
 
 import java.sql.PreparedStatement;
@@ -21,10 +25,13 @@ public class ReviewDbStorage implements ReviewStorage {
 
     private final JdbcTemplate jdbc;
     private final ReviewRowMapper reviewRowMapper;
+    private final EventStorage eventStorage;
 
-    public ReviewDbStorage(JdbcTemplate jdbc, ReviewRowMapper reviewRowMapper) {
+    public ReviewDbStorage(JdbcTemplate jdbc, ReviewRowMapper reviewRowMapper,
+                           @Qualifier("EventDao") final EventStorage eventStorage) {
         this.jdbc = jdbc;
         this.reviewRowMapper = reviewRowMapper;
+        this.eventStorage = eventStorage;
     }
 
     @Override
@@ -50,7 +57,9 @@ public class ReviewDbStorage implements ReviewStorage {
     public void deleteReview(Long id) {
         String query = "DELETE FROM film_reviews WHERE id = ?";
 
+        Review review = findById(id).get();
         jdbc.update(query, id);
+        eventStorage.addEvent(review.getUserId(), review.getReviewId(), EventType.REVIEW, Operation.REMOVE);
     }
 
     @Override
@@ -71,6 +80,7 @@ public class ReviewDbStorage implements ReviewStorage {
         Long id = (Long) Objects.requireNonNull(keyHolder.getKeys()).get("id");
         if (id != null) {
             review.setReviewId(id);
+            eventStorage.addEvent(review.getUserId(), review.getReviewId(), EventType.REVIEW, Operation.ADD);
         } else {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось добавить данные");
         }
@@ -92,6 +102,8 @@ public class ReviewDbStorage implements ReviewStorage {
         if (rowsUpdated == 0) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Не удалось обновить данные");
         }
+
+        eventStorage.addEvent(review.getUserId(), review.getReviewId(), EventType.REVIEW, Operation.UPDATE);
 
         return review;
     }
