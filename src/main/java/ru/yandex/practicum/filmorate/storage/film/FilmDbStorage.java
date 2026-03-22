@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,10 +9,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.dto.user.LikesDto;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreRowMapper;
@@ -32,14 +31,17 @@ public class FilmDbStorage implements FilmStorage {
     private final GenreRowMapper genreRowMapper;
     private final DirectorRowMapper directorRowMapper;
     private final MpaRowMapper mpaRowMapper;
+    private final EventStorage eventStorage;
 
     public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper,
-                         GenreRowMapper genreRowMapper, DirectorRowMapper directorRowMapper, MpaRowMapper mpaRowMapper) {
+                         GenreRowMapper genreRowMapper, DirectorRowMapper directorRowMapper, MpaRowMapper mpaRowMapper,
+                         @Qualifier("EventDao") final EventStorage eventStorage) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.filmRowMapper = filmRowMapper;
         this.genreRowMapper = genreRowMapper;
         this.directorRowMapper = directorRowMapper;
         this.mpaRowMapper = mpaRowMapper;
+        this.eventStorage = eventStorage;
     }
 
     @Override
@@ -80,17 +82,6 @@ public class FilmDbStorage implements FilmStorage {
         setAllGenresDirectorsAndLikes(films);
 
         return films;
-    }
-
-    private void setAllGenresDirectorsAndLikes(List<Film> films) {
-        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
-        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
-
-        Map<Long, Set<Director>> allDirectors = getDirectorsForAllFilms();
-        films.forEach(film -> film.setDirectors(allDirectors.getOrDefault(film.getId(), Collections.emptySet())));
-
-        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
-        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
     }
 
     @Override
@@ -197,6 +188,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film addLike(Long filmId, Long userId) {
         String query = "MERGE INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(query, filmId, userId);
+        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.ADD);
 
         return findById(filmId).orElse(null);
     }
@@ -205,6 +197,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film deleteLike(Long filmId, Long userId) {
         String query = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
         jdbc.update(query, filmId, userId);
+        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
 
         return findById(filmId).orElse(null);
     }
@@ -305,6 +298,7 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    @Override
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
@@ -325,6 +319,7 @@ public class FilmDbStorage implements FilmStorage {
         return films;
     }
 
+    @Override
     public List<Film> getRecommendationsByUserId(Long id) {
 
         String similarUsersQuery = """
@@ -368,6 +363,57 @@ public class FilmDbStorage implements FilmStorage {
                 .stream()
                 .map(filmId -> findById(filmId).get())
                 .toList();
+    }
+
+    @Override
+    public List<Film> searchFilms(String substring, String queryParam) {
+        StringBuilder query = new StringBuilder("""
+            SELECT f.id, f.name, f.description, f.release_date, f.duration,
+                   r.id as mpa_id, r.name as mpa_name
+            FROM films as f
+            LEFT JOIN likes as l ON f.id = l.film_id
+            LEFT JOIN ratings as r ON f.rating_id = r.id
+            LEFT JOIN film_directors as fd ON fd.film_id = f.id
+            LEFT JOIN directors as d ON d.id = fd.director_id
+            WHERE
+            """);
+
+        List<String> params = new ArrayList<>();
+
+        if (queryParam.contains("director")) {
+            query.append(" d.name ILIKE ? ");
+            params.add('%' + substring + '%');
+            if (queryParam.contains("title")) {
+                query.append(" OR f.name ILIKE ? ");
+                params.add('%' + substring + '%');
+            }
+        } else {
+            query.append(" f.name ILIKE ? ");
+            params.add('%' + substring + '%');
+        }
+
+        query.append("""
+            GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
+                     r.id, r.name
+            ORDER BY COUNT(l.user_id) DESC
+            """);
+
+        List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
+
+        setAllGenresDirectorsAndLikes(films);
+
+        return films;
+    }
+
+    private void setAllGenresDirectorsAndLikes(List<Film> films) {
+        Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
+        films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Set<Director>> allDirectors = getDirectorsForAllFilms();
+        films.forEach(film -> film.setDirectors(allDirectors.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
+        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
     }
 
     private Set<Genre> getGenresForFilmId(Long id) {
