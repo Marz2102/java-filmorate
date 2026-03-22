@@ -341,4 +341,52 @@ class FilmControllerTest {
 
         verify(filmService).deleteFilm(1L);
     }
+
+    @Test
+    void searchFilms_ByTitle_ShouldReturnList() throws Exception {
+        when(filmService.searchFilms("крад", "title")).thenReturn(List.of(filmDto));
+
+        mockMvc.perform(get("/films/search?query=крад&by=title"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(filmService).searchFilms("крад", "title");
+    }
+
+    @Test
+    void searchFilms_ByDirector_ShouldReturnList() throws Exception {
+        when(filmService.searchFilms("нолан", "director")).thenReturn(List.of(filmDto));
+
+        mockMvc.perform(get("/films/search?query=нолан&by=director"))
+                .andExpect(status().isOk());
+
+        verify(filmService).searchFilms("нолан", "director");
+    }
+
+    @Test
+    void searchFilms_ByBoth_ShouldReturnList() throws Exception {
+        when(filmService.searchFilms("крад", "director,title")).thenReturn(List.of(filmDto));
+
+        mockMvc.perform(get("/films/search?query=крад&by=director,title"))
+                .andExpect(status().isOk());
+
+        verify(filmService).searchFilms("крад", "director,title");
+    }
+
+    @Test
+    void searchFilms_WithInvalidBy_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/films/search?query=крад&by=invalid"))
+                .andExpect(status().isBadRequest());
+
+        verify(filmService, never()).searchFilms(anyString(), anyString());
+    }
+
+    @Test
+    void searchFilms_WithEmptyBy_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/films/search?query=крад&by="))
+                .andExpect(status().isBadRequest());
+
+        verify(filmService, never()).searchFilms(anyString(), anyString());
+    }
+
 }
