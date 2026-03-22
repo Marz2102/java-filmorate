@@ -30,6 +30,7 @@ public class EventDbStorage implements EventStorage {
         return jdbc.query(query, eventRowMapper, userId);
     }
 
+    @Override
     public void addEvent(long userId, long entityId, EventType eventType, Operation operation) {
         String insertQuery = "INSERT INTO events (user_id, entity_id, event_type, operation) VALUES (?, ?, ?, ?)";
 
