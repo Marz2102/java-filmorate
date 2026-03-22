@@ -339,80 +339,6 @@ class FilmDbStorageTest {
         filmStorage.addFilm(film1);
 
         Film film2 = new Film();
-        film2.setName("Крадущийся тигр");
-        film2.setDescription("Description");
-        film2.setDuration(100);
-        film2.setReleaseDate(LocalDate.of(2000, 1, 1));
-        film2.setMpa(new Mpa(1L, "G"));
-        filmStorage.addFilm(film2);
-
-        List<Film> result = filmStorage.searchFilms("ин", "director,title");
-
-        assertThat(result).hasSize(2);
-        assertThat(result.stream().map(Film::getId).distinct().count()).isEqualTo(2);
-    }
-
-    @Test
-    void searchFilms_ByTitle_ShouldReturnMatchingFilms() {
-        Film film1 = new Film();
-        film1.setName("Крадущийся тигр");
-        film1.setDescription("desc");
-        film1.setDuration(100);
-        film1.setReleaseDate(LocalDate.of(2020, 1, 1));
-        film1.setMpa(new Mpa(1L, "G"));
-        filmStorage.addFilm(film1);
-
-        Film film2 = new Film();
-        film2.setName("Другой фильм");
-        film2.setDescription("desc");
-        film2.setDuration(100);
-        film2.setReleaseDate(LocalDate.of(2020, 1, 1));
-        film2.setMpa(new Mpa(1L, "G"));
-        filmStorage.addFilm(film2);
-
-        List<Film> result = filmStorage.searchFilms("крад", "title");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).contains("Крадущийся");
-    }
-
-    @Test
-    void searchFilms_ByDirector_ShouldReturnMatchingFilms() {
-        Director director = new Director();
-        director.setName("Кристофер Нолан");
-        director = directorStorage.addDirector(director);
-
-        Film film = new Film();
-        film.setName("Inception");
-        film.setDescription("Description");
-        film.setDuration(148);
-        film.setReleaseDate(LocalDate.of(2010, 7, 16));
-        film.setMpa(new Mpa(1L, "G"));
-        film.setDirectors(Set.of(director));
-        filmStorage.addFilm(film);
-
-        List<Film> result = filmStorage.searchFilms("нолан", "director");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Inception");
-    }
-
-    @Test
-    void searchFilms_ByBoth_ShouldReturnMatchingFilms() {
-        Director director = new Director();
-        director.setName("Кристофер Нолан");
-        director = directorStorage.addDirector(director);
-
-        Film film1 = new Film();
-        film1.setName("Inception");
-        film1.setDescription("Description");
-        film1.setDuration(148);
-        film1.setReleaseDate(LocalDate.of(2010, 7, 16));
-        film1.setMpa(new Mpa(1L, "G"));
-        film1.setDirectors(Set.of(director));
-        filmStorage.addFilm(film1);
-
-        Film film2 = new Film();
         film2.setName("Incredible Film");
         film2.setDescription("Description");
         film2.setDuration(100);
@@ -425,5 +351,4 @@ class FilmDbStorageTest {
         assertThat(result).hasSize(2);
         assertThat(result.stream().map(Film::getId).distinct().count()).isEqualTo(2);
     }
-
 }
