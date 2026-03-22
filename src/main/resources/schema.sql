@@ -1,18 +1,3 @@
-MERGE INTO genres (name) KEY(name) VALUES
-       ('Комедия'),
-       ('Драма'),
-       ('Мультфильм'),
-       ('Триллер'),
-       ('Документальный'),
-       ('Боевик');
-
-MERGE INTO ratings (name) KEY(name) VALUES
-       ('G'),
-       ('PG'),
-       ('PG-13'),
-       ('R'),
-       ('NC-17');
-
 CREATE TABLE IF NOT EXISTS ratings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) UNIQUE,
@@ -52,7 +37,7 @@ CREATE TABLE IF NOT EXISTS film_directors (
     director_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (film_id, director_id),
-    FOREIGN KEY (film_id)     REFERENCES films(id) ON DELETE CASCADE,
+    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
     FOREIGN KEY (director_id) REFERENCES directors(id) ON DELETE CASCADE
 );
 
@@ -126,3 +111,19 @@ CREATE TABLE IF NOT EXISTS reviews_reactions (
     FOREIGN KEY (review_id) REFERENCES film_reviews(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Вставляем данные после создания таблиц
+MERGE INTO genres (id, name) KEY(id) VALUES
+       (1, 'Комедия'),
+       (2, 'Драма'),
+       (3, 'Мультфильм'),
+       (4, 'Триллер'),
+       (5, 'Документальный'),
+       (6, 'Боевик');
+
+MERGE INTO ratings (id, name) KEY(id) VALUES
+       (1, 'G'),
+       (2, 'PG'),
+       (3, 'PG-13'),
+       (4, 'R'),
+       (5, 'NC-17');
