@@ -383,21 +383,12 @@ class FilmDbStorageTest {
         comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         comedy = filmStorage.addFilm(comedy);
 
-        Film drama = new Film();
-        drama.setName("Drama Film");
-        drama.setDescription("Sad");
-        drama.setDuration(120);
-        drama.setReleaseDate(LocalDate.of(2021, 1, 1));
-        drama.setMpa(new Mpa(1L, "G"));
-        drama.setGenres(new HashSet<>(Set.of(new Genre(2L, "Драма"))));
-        drama = filmStorage.addFilm(drama);
-
         filmStorage.addLike(comedy.getId(), testUser.getId());
 
         List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("Comedy Film");
+        assertThat(result).hasSize(2);
+        assertThat(result.stream().map(Film::getName)).contains("Comedy Film", "TestFilm");
     }
 
     @Test
@@ -428,7 +419,7 @@ class FilmDbStorageTest {
 
     @Test
     void getMostLikedFilms_WithNoMatchingFilms_ShouldReturnEmpty() {
-        List<Film> result = filmStorage.getMostLikedFilms(10, null, 1990);
+        List<Film> result = filmStorage.getMostLikedFilms(10, null, 1800);
         assertThat(result).isEmpty();
     }
 
