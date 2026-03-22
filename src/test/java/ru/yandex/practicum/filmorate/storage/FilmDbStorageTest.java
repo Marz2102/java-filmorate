@@ -351,4 +351,185 @@ class FilmDbStorageTest {
         assertThat(result).hasSize(2);
         assertThat(result.stream().map(Film::getId).distinct().count()).isEqualTo(2);
     }
+
+    @Test
+    void getMostLikedFilms_WithGenreAndYear_ShouldReturnFiltered() {
+        Film film2020Comedy = new Film();
+        film2020Comedy.setName("Comedy 2020");
+        film2020Comedy.setDescription("Funny movie");
+        film2020Comedy.setDuration(120);
+        film2020Comedy.setReleaseDate(LocalDate.of(2020, 6, 1));
+        film2020Comedy.setMpa(new Mpa(1L, "G"));
+        film2020Comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
+        film2020Comedy = filmStorage.addFilm(film2020Comedy);
+
+        filmStorage.addLike(film2020Comedy.getId(), testUser.getId());
+
+        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, 2020);
+
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Comedy 2020");
+    }
+
+    @Test
+    void getMostLikedFilms_WithGenreOnly_ShouldReturnFilteredByGenre() {
+        Film comedy = new Film();
+        comedy.setName("Comedy Film");
+        comedy.setDescription("Funny");
+        comedy.setDuration(100);
+        comedy.setReleaseDate(LocalDate.of(2021, 1, 1));
+        comedy.setMpa(new Mpa(1L, "G"));
+        comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
+        comedy = filmStorage.addFilm(comedy);
+
+        Film drama = new Film();
+        drama.setName("Drama Film");
+        drama.setDescription("Sad");
+        drama.setDuration(120);
+        drama.setReleaseDate(LocalDate.of(2021, 1, 1));
+        drama.setMpa(new Mpa(1L, "G"));
+        drama.setGenres(new HashSet<>(Set.of(new Genre(2L, "Драма"))));
+        drama = filmStorage.addFilm(drama);
+
+        filmStorage.addLike(comedy.getId(), testUser.getId());
+
+        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Comedy Film");
+    }
+
+    @Test
+    void getMostLikedFilms_WithYearOnly_ShouldReturnFilteredByYear() {
+        Film film2020 = new Film();
+        film2020.setName("Film 2020");
+        film2020.setDescription("From 2020");
+        film2020.setDuration(100);
+        film2020.setReleaseDate(LocalDate.of(2020, 7, 1));
+        film2020.setMpa(new Mpa(1L, "G"));
+        film2020 = filmStorage.addFilm(film2020);
+
+        Film film2021 = new Film();
+        film2021.setName("Film 2021");
+        film2021.setDescription("From 2021");
+        film2021.setDuration(110);
+        film2021.setReleaseDate(LocalDate.of(2021, 7, 1));
+        film2021.setMpa(new Mpa(1L, "G"));
+        film2021 = filmStorage.addFilm(film2021);
+
+        filmStorage.addLike(film2020.getId(), testUser.getId());
+
+        List<Film> result = filmStorage.getMostLikedFilms(10, null, 2020);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Film 2020");
+    }
+
+    @Test
+    void getMostLikedFilms_WithNoMatchingFilms_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.getMostLikedFilms(10, null, 1990);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchFilms_WithEmptyQuery_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.searchFilms("", "title");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchFilms_WithWhitespaceQuery_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.searchFilms("   ", "title");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchFilms_WithNullQuery_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.searchFilms(null, "title");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void searchFilms_WithInvalidByParam_ShouldReturnNotNull() {
+        List<Film> result = filmStorage.searchFilms("test", "invalid");
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void searchFilms_ByTitle_CaseInsensitive_ShouldWork() {
+        Film film = new Film();
+        film.setName("Inception Movie");
+        film.setDescription("Mind-bending");
+        film.setDuration(148);
+        film.setReleaseDate(LocalDate.of(2010, 7, 16));
+        film.setMpa(new Mpa(1L, "G"));
+        filmStorage.addFilm(film);
+
+        List<Film> resultLower = filmStorage.searchFilms("inception", "title");
+        List<Film> resultUpper = filmStorage.searchFilms("INCEPTION", "title");
+        List<Film> resultPartial = filmStorage.searchFilms("cept", "title");
+
+        assertThat(resultLower).hasSize(1);
+        assertThat(resultUpper).hasSize(1);
+        assertThat(resultPartial).hasSize(1);
+    }
+
+    @Test
+    void searchFilms_ByDirector_CaseInsensitive_ShouldWork() {
+        Director director = new Director();
+        director.setName("Christopher Nolan");
+        director = directorStorage.addDirector(director);
+
+        Film film = new Film();
+        film.setName("Inception");
+        film.setDescription("Mind-bending");
+        film.setDuration(148);
+        film.setReleaseDate(LocalDate.of(2010, 7, 16));
+        film.setMpa(new Mpa(1L, "G"));
+        film.setDirectors(Set.of(director));
+        filmStorage.addFilm(film);
+
+        List<Film> resultLower = filmStorage.searchFilms("nolan", "director");
+        List<Film> resultUpper = filmStorage.searchFilms("NOLAN", "director");
+        List<Film> resultPartial = filmStorage.searchFilms("olan", "director");
+
+        assertThat(resultLower).hasSize(1);
+        assertThat(resultUpper).hasSize(1);
+        assertThat(resultPartial).hasSize(1);
+    }
+
+    @Test
+    void searchFilms_ByBoth_ShouldReturnMatching() {
+        Director director = new Director();
+        director.setName("Quentin Tarantino");
+        director = directorStorage.addDirector(director);
+
+        Film filmByDirector = new Film();
+        filmByDirector.setName("Pulp Fiction");
+        filmByDirector.setDescription("Classic");
+        filmByDirector.setDuration(154);
+        filmByDirector.setReleaseDate(LocalDate.of(1994, 10, 14));
+        filmByDirector.setMpa(new Mpa(1L, "G"));
+        filmByDirector.setDirectors(Set.of(director));
+        filmStorage.addFilm(filmByDirector);
+
+        Film filmByTitle = new Film();
+        filmByTitle.setName("Pulp Movie");
+        filmByTitle.setDescription("Another pulp");
+        filmByTitle.setDuration(100);
+        filmByTitle.setReleaseDate(LocalDate.of(2020, 1, 1));
+        filmByTitle.setMpa(new Mpa(1L, "G"));
+        filmStorage.addFilm(filmByTitle);
+
+        List<Film> result = filmStorage.searchFilms("pulp", "director,title");
+
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void searchFilms_ByTitle_WithNoMatches_ShouldReturnEmpty() {
+        List<Film> result = filmStorage.searchFilms("nonexistentmovie", "title");
+        assertThat(result).isEmpty();
+    }
 }
