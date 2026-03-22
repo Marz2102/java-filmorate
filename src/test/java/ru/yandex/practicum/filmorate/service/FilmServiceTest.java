@@ -359,4 +359,41 @@ class FilmServiceTest {
         verify(filmStorage).findById(999L);
         verify(filmStorage, never()).deleteFilm(anyLong());
     }
+
+    @Test
+    void searchFilms_ShouldReturnList() {
+        when(filmStorage.searchFilms("крад", "title")).thenReturn(List.of(film));
+
+        List<FilmDto> result = filmService.searchFilms("крад", "title");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getName()).isEqualTo("Inception");
+
+        verify(filmStorage).searchFilms("крад", "title");
+    }
+
+    @Test
+    void searchFilms_WithInvalidBy_ShouldThrowException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms("крад", "invalid"));
+
+        verify(filmStorage, never()).searchFilms(anyString(), anyString());
+    }
+
+    @Test
+    void searchFilms_WithEmptyBy_ShouldThrowException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms("крад", ""));
+
+        verify(filmStorage, never()).searchFilms(anyString(), anyString());
+    }
+
+    @Test
+    void searchFilms_WithNullBy_ShouldThrowException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms("крад", null));
+
+        verify(filmStorage, never()).searchFilms(anyString(), anyString());
+    }
+
 }
