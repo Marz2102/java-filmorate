@@ -563,8 +563,10 @@ class FilmDbStorageTest {
         director.setName("Test Director");
         director = directorStorage.addDirector(director);
 
+        Long directorId = director.getId();
+
         assertThrows(IllegalArgumentException.class, () ->
-                filmStorage.getFilmsByDirectorId(director.getId(), "invalid"));
+                filmStorage.getFilmsByDirectorId(directorId, "invalid"));
     }
 
     @Test
@@ -572,5 +574,4 @@ class FilmDbStorageTest {
         List<Film> result = filmStorage.searchFilms("test", "director");
         assertThat(result).isEmpty();
     }
-
 }
