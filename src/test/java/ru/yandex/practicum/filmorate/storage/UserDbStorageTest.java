@@ -208,6 +208,36 @@ class UserDbStorageTest {
     }
 
     @Test
+    void deleteUser_ShouldRemoveUserAndRelations() {
+        User userToDelete = new User();
+        userToDelete.setEmail("delete_relations@test.com");
+        userToDelete.setLogin("delete_relations");
+        userToDelete.setName("To Delete With Relations");
+        userToDelete.setBirthday(LocalDate.of(2000, 1, 1));
+        userToDelete = userStorage.addUser(userToDelete);
+
+        User friend = new User();
+        friend.setEmail("friend_relations@test.com");
+        friend.setLogin("friend_relations");
+        friend.setName("Friend");
+        friend.setBirthday(LocalDate.of(2000, 1, 1));
+        friend = userStorage.addUser(friend);
+
+        userStorage.addFriend(userToDelete.getId(), friend.getId());
+
+        List<User> friendsBeforeDelete = userStorage.getFriends(userToDelete.getId());
+        assertEquals(1, friendsBeforeDelete.size());
+
+        userStorage.deleteUser(userToDelete.getId());
+
+        Optional<User> deletedUser = userStorage.findById(userToDelete.getId());
+        assertThat(deletedUser).isNotPresent();
+
+        List<User> friendsOfFriend = userStorage.getFriends(friend.getId());
+        assertThat(friendsOfFriend).isEmpty();
+    }
+
+    @Test
     void deleteNonExistentUser_ShouldThrowException() {
         assertThrows(ResponseStatusException.class, () -> {
             userStorage.deleteUser(999L);
