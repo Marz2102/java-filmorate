@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ru.yandex.practicum.filmorate.dto.event.EventDto;
 import ru.yandex.practicum.filmorate.dto.user.UserCreateDto;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.dto.user.UserUpdateDto;
@@ -306,4 +307,27 @@ class UserServiceTest {
         verify(userStorage).findById(999L);
         verify(userStorage, never()).deleteUser(anyLong());
     }
+
+    @Test
+    void getFeed_ShouldReturnList() {
+        when(userStorage.findById(1L)).thenReturn(Optional.of(user));
+        when(eventStorage.getEvents(anyLong())).thenReturn(List.of());
+
+        List<EventDto> result = userService.getFeed(1L);
+
+        assertThat(result).isNotNull();
+        verify(userStorage).findById(1L);
+        verify(eventStorage).getEvents(anyLong());
+    }
+
+    @Test
+    void getFeed_UserNotFound_ShouldThrowException() {
+        when(userStorage.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> userService.getFeed(999L));
+
+        verify(userStorage).findById(999L);
+        verify(eventStorage, never()).getEvents(anyLong());
+    }
+
 }
