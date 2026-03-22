@@ -372,4 +372,18 @@ class FilmControllerTest {
 
         verify(filmService).searchFilms("крад", "director,title");
     }
+
+    @Test
+    void searchFilms_WithEmptyQuery_ShouldReturnBadRequest() throws Exception {
+        when(filmService.searchFilms("", "title"))
+                .thenThrow(new ValidationException("Укажите текст для поиска"));
+
+        mockMvc.perform(get("/films/search?query=&by=title"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Ошибка валидации данных"))
+                .andExpect(jsonPath("$.description").value("Укажите текст для поиска"));
+
+        verify(filmService).searchFilms("", "title");
+    }
+
 }

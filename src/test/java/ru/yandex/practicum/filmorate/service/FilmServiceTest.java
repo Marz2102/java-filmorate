@@ -395,4 +395,27 @@ class FilmServiceTest {
 
         verify(filmStorage, never()).searchFilms(anyString(), anyString());
     }
+
+    @Test
+    void searchFilms_WithEmptyQuery_ShouldThrowValidationException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms("", "title"));
+    }
+
+    @Test
+    void searchFilms_WithEmptyQuery_ShouldThrowValidationException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms("", "title"));
+
+        verify(filmStorage, never()).searchFilms(anyString(), anyString());
+    }
+
+    @Test
+    void searchFilms_WithNullQuery_ShouldThrowValidationException() {
+        assertThrows(ValidationException.class, () ->
+                filmService.searchFilms(null, "title"));
+
+        verify(filmStorage, never()).searchFilms(anyString(), anyString());
+    }
+
 }

@@ -367,16 +367,20 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> searchFilms(String substring, String queryParam) {
+        if (substring == null || substring.isBlank()) {
+            return Collections.emptyList();
+        }
+
         StringBuilder query = new StringBuilder("""
-            SELECT f.id, f.name, f.description, f.release_date, f.duration,
-                   r.id as mpa_id, r.name as mpa_name
-            FROM films as f
-            LEFT JOIN likes as l ON f.id = l.film_id
-            LEFT JOIN ratings as r ON f.rating_id = r.id
-            LEFT JOIN film_directors as fd ON fd.film_id = f.id
-            LEFT JOIN directors as d ON d.id = fd.director_id
-            WHERE
-            """);
+        SELECT f.id, f.name, f.description, f.release_date, f.duration,
+               r.id as mpa_id, r.name as mpa_name
+        FROM films as f
+        LEFT JOIN likes as l ON f.id = l.film_id
+        LEFT JOIN ratings as r ON f.rating_id = r.id
+        LEFT JOIN film_directors as fd ON fd.film_id = f.id
+        LEFT JOIN directors as d ON d.id = fd.director_id
+        WHERE
+        """);
 
         List<String> params = new ArrayList<>();
 
@@ -393,10 +397,10 @@ public class FilmDbStorage implements FilmStorage {
         }
 
         query.append("""
-            GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
-                     r.id, r.name
-            ORDER BY COUNT(l.user_id) DESC
-            """);
+        GROUP BY f.id, f.name, f.description, f.release_date, f.duration,
+                 r.id, r.name
+        ORDER BY COUNT(l.user_id) DESC
+        """);
 
         List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
 
