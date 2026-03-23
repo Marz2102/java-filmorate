@@ -182,6 +182,8 @@ class FilmControllerTest {
                 "Updated description",
                 LocalDate.of(2010, 7, 16),
                 150,
+                null,
+                null,
                 null
         );
 
@@ -210,6 +212,8 @@ class FilmControllerTest {
                 "Description",
                 LocalDate.of(2010, 7, 16),
                 150,
+                null,
+                null,
                 null
         );
 

@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.dto.film.FilmUpdateDto;
 import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -80,21 +82,43 @@ public final class FilmMapper {
             log.debug("Обновили продолжительность фильма - {}", film.getDuration());
         }
 
-        if (filmUpdateDto.getDirectors() != null) {
-            if (filmUpdateDto.getDirectors().isEmpty()) {
-                film.setDirectors(new HashSet<>());
-                log.debug("Очистили список режиссёров фильма");
+        if (filmUpdateDto.getMpa() != null) {
+            Mpa mpa = new Mpa();
+            mpa.setId(filmUpdateDto.getMpa().getId());
+            film.setMpa(mpa);
+            log.debug("Обновили рейтинг фильма, id={}", film.getMpa().getId());
+        }
+
+        if (filmUpdateDto.getGenres() != null) {
+            if (filmUpdateDto.getGenres().isEmpty()) {
+                film.setGenres(new HashSet<>());
+                log.debug("Очистили список жанров фильма");
             } else {
-                Set<Director> directors = filmUpdateDto.getDirectors().stream()
+                Set<Genre> genres = filmUpdateDto.getGenres().stream()
                         .map(d -> {
-                            Director director = new Director();
-                            director.setId(d.getId());
-                            return director;
+                            Genre genre = new Genre();
+                            genre.setId(d.getId());
+                            return genre;
                         })
                         .collect(Collectors.toSet());
-                film.setDirectors(directors);
-                log.debug("Обновили режиссёров фильма, ids={}", filmUpdateDto.getDirectors());
+                film.setGenres(genres);
+                log.debug("Обновили список жанров фильма, ids={}", film.getGenres());
             }
+        }
+
+        if (filmUpdateDto.getDirectors() == null || filmUpdateDto.getDirectors().isEmpty()) {
+            film.setDirectors(new HashSet<>());
+            log.debug("Очистили список режиссёров фильма");
+        } else {
+            Set<Director> directors = filmUpdateDto.getDirectors().stream()
+                    .map(d -> {
+                        Director director = new Director();
+                        director.setId(d.getId());
+                        return director;
+                    })
+                    .collect(Collectors.toSet());
+            film.setDirectors(directors);
+            log.debug("Обновили режиссёров фильма, ids={}", film.getDirectors());
         }
 
         return film;

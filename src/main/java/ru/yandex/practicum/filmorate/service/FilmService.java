@@ -86,6 +86,7 @@ public class FilmService {
     }
 
     public List<FilmDto> getAllFilmsByDirectorId(Long directorId, String sortParam) {
+        directorService.getDirectorById(directorId);
         List<Film> films = filmStorage.getFilmsByDirectorId(directorId, sortParam);
 
         return films.stream()

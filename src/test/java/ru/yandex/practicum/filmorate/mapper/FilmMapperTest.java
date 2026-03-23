@@ -49,6 +49,8 @@ class FilmMapperTest {
                 "New Description",
                 LocalDate.of(2010, 7, 16),
                 150,
+                null,
+                null,
                 null
         );
 
@@ -75,6 +77,8 @@ class FilmMapperTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 null
         );
 
@@ -93,6 +97,8 @@ class FilmMapperTest {
 
         FilmUpdateDto updateDto = new FilmUpdateDto(
                 1L,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -116,9 +122,11 @@ class FilmMapperTest {
                 null,
                 null,
                 null,
+                null,
+                null,
                 java.util.List.of(
-                        new ru.yandex.practicum.filmorate.dto.director.UpdateDirectorDto(1L),
-                        new ru.yandex.practicum.filmorate.dto.director.UpdateDirectorDto(2L)
+                        new ru.yandex.practicum.filmorate.dto.director.FilmUpdateDirectorDto(1L),
+                        new ru.yandex.practicum.filmorate.dto.director.FilmUpdateDirectorDto(2L)
                 )
         );
 

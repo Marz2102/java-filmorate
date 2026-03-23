@@ -342,6 +342,8 @@ class FilmorateIntegrationTest {
                 "Updated Description",
                 LocalDate.of(2024, 1, 1),
                 220,
+                null,
+                null,
                 null
         );
 

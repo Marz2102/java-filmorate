@@ -7,7 +7,9 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.yandex.practicum.filmorate.dto.director.UpdateDirectorDto;
+import ru.yandex.practicum.filmorate.dto.director.FilmUpdateDirectorDto;
+import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
+import ru.yandex.practicum.filmorate.dto.mpa.MpaDto;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,5 +32,10 @@ public class FilmUpdateDto {
     @Positive(message = "Продолжительность фильма должна быть положительной")
     private Integer duration;
 
-    private List<UpdateDirectorDto> directors;
+    private MpaDto mpa;
+
+    private List<GenreDto> genres;
+
+    private List<FilmUpdateDirectorDto> directors;
+
 }

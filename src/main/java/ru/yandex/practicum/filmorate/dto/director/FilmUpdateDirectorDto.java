@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UpdateDirectorDto {
+public class FilmUpdateDirectorDto {
 
     private Long id;
 }

@@ -145,13 +145,14 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film updateFilm(Film film) {
         String updateFilmSql =
-                "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+                "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE id = ?";
 
         int rowsUpdated = jdbc.update(updateFilmSql,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
+                film.getMpa().getId(),
                 film.getId());
 
         if (rowsUpdated == 0) {
@@ -172,6 +173,24 @@ public class FilmDbStorage implements FilmStorage {
                     (ps, director) -> {
                         ps.setLong(1, film.getId());
                         ps.setLong(2, director.getId());
+                    }
+            );
+        }
+
+        String deleteGenresSql = "DELETE FROM film_genres WHERE film_id = ?";
+        jdbc.update(deleteGenresSql, film.getId());
+
+        if (film.getGenres() != null && !film.getGenres().isEmpty()) {
+            String insertGenresSql =
+                    "MERGE INTO film_genres (film_id, genre_id) VALUES (?, ?)";
+
+            jdbc.batchUpdate(
+                    insertGenresSql,
+                    film.getGenres(),
+                    film.getGenres().size(),
+                    (ps, genre) -> {
+                        ps.setLong(1, film.getId());
+                        ps.setLong(2, genre.getId());
                     }
             );
         }
@@ -489,7 +508,7 @@ public class FilmDbStorage implements FilmStorage {
                 SELECT r.id, r.name
                 FROM films as f
                 INNER JOIN ratings as r ON f.rating_id = r.id
-                WHERE r.id = ?
+                WHERE f.id = ?
                 """;
 
         try {

@@ -186,6 +186,8 @@ class FilmServiceTest {
                 "Updated description",
                 LocalDate.of(2010, 7, 16),
                 150,
+                null,
+                null,
                 null
         );
 
@@ -216,6 +218,8 @@ class FilmServiceTest {
                 "Description",
                 LocalDate.of(2010, 7, 16),
                 150,
+                null,
+                null,
                 null
         );
 
@@ -235,6 +239,8 @@ class FilmServiceTest {
                 "Description",
                 LocalDate.of(1890, 1, 1),
                 100,
+                null,
+                null,
                 null
         );
 
