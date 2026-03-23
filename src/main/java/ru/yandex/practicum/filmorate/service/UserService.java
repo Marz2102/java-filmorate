@@ -128,36 +128,18 @@ public class UserService {
     }
 
     public List<EventDto> getFeed(Long userId) {
-        User user = userStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id - " + userId + " не найден"));
+        checkToFindById(userId);
 
-        Set<Long> usersId = user.getFriends().keySet().stream()
-                .map(User::getId)
-                .collect(Collectors.toSet());
-
-        usersId.add(userId);
-
-        List<Event> events = new ArrayList<>();
-        usersId.stream()
-                .map(eventStorage::getEvents)
-                .forEach(events::addAll);
-
-        return events.stream()
+        return eventStorage.getEvents(userId)
+                .stream()
                 .map(EventMapper::mapEventToEventDto)
                 .sorted(Comparator.comparing(EventDto::getTimestamp))
                 .toList();
     }
 
     private void checkToFindByIds(Long id, Long friendId) {
-        if (userStorage.findById(id).isEmpty()) {
-            log.info("Не найдено пользователя с указанным id - {}", id);
-            throw new NotFoundException("Пользователь с id - " + id + " не найден");
-        }
-
-        if (userStorage.findById(friendId).isEmpty()) {
-            log.info("Не найдено пользователя с указанным id - {}", friendId);
-            throw new NotFoundException("Пользователь с id - " + friendId + " не найден");
-        }
+        checkToFindById(id);
+        checkToFindById(friendId);
     }
 
     private void checkToFindById(Long id) {
