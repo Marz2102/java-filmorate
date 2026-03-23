@@ -31,6 +31,12 @@ public class ErrorHandler {
         return new ErrorResponse("Ошибка валидации данных", message);
     }
 
+    @ExceptionHandler(ResponseStatusException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleResponseStatusException(ResponseStatusException e) {
+        return new ErrorResponse("Ошибка валидации", e.getReason());
+    }
+
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(final NotFoundException e) {

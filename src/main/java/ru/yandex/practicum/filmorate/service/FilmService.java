@@ -151,6 +151,11 @@ public class FilmService {
     }
 
     public List<FilmDto> searchFilms(String query, String queryParam) {
+        if (query == null || query.isBlank()) {
+            log.warn("Не указан текст для поиска");
+            throw new ValidationException("Укажите текст для поиска");
+        }
+
         if (queryParam == null || queryParam.isBlank()) {
             log.warn("Не указан параметр для поиска фильмов");
             throw new ValidationException("Укажите параметр director или title для поиска фильмов");

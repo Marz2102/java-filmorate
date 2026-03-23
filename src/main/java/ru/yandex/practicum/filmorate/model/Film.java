@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.dto.user.LikesDto;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Data
@@ -22,4 +23,17 @@ public class Film {
     private Set<Genre> genres = new HashSet<>();
     private Set<LikesDto> likes = new HashSet<>();
     private Mpa mpa;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Film film = (Film) o;
+        return Objects.equals(id, film.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }

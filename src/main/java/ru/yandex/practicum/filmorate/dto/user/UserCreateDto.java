@@ -1,13 +1,17 @@
 package ru.yandex.practicum.filmorate.dto.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UserCreateDto {
     @NotBlank
     @Email(message = "Введите почту в корректном формате")
