@@ -122,14 +122,12 @@ class ReviewControllerTest {
 
     @Test
     void addReview_WithNullFilmId_ShouldReturnBadRequest() throws Exception {
-        String invalidJson = """
-                {
-                    "content": "Great movie!",
-                    "filmId": null,
-                    "userId": 1,
-                    "isPositive": true
-                }
-                """;
+        String invalidJson = "{\n" +
+                "    \"content\": \"Great movie!\",\n" +
+                "    \"filmId\": null,\n" +
+                "    \"userId\": 1,\n" +
+                "    \"isPositive\": true\n" +
+                "}";
 
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
