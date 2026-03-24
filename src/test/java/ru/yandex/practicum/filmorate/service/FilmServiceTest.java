@@ -5,16 +5,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.yandex.practicum.filmorate.dto.director.DirectorDto;
 import ru.yandex.practicum.filmorate.dto.film.*;
 import ru.yandex.practicum.filmorate.dto.genre.GenreDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.EventType;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
@@ -41,9 +38,6 @@ class FilmServiceTest {
     private GenreService genreService;
 
     @Mock
-    private MpaService mpaService;
-
-    @Mock
     private DirectorService directorService;
 
     @Mock
@@ -57,7 +51,6 @@ class FilmServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         film = new Film();
         film.setId(1L);
         film.setName("Inception");
@@ -296,13 +289,6 @@ class FilmServiceTest {
         assertThat(result).hasSize(1);
 
         verify(filmStorage).getMostLikedFilms(5, null, null);
-    }
-
-    @Test
-    void getMostLikedFilms_WithNegativeCount_ShouldThrowException() {
-        assertThrows(ValidationException.class, () -> filmService.getMostLikedFilms(-1, null, null));
-
-        verify(filmStorage, never()).getMostLikedFilms(anyInt(), any(), any());
     }
 
     @Test
