@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -9,8 +8,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.dto.user.LikesDto;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.storage.mapper.GenreRowMapper;
@@ -31,17 +30,14 @@ public class FilmDbStorage implements FilmStorage {
     private final GenreRowMapper genreRowMapper;
     private final DirectorRowMapper directorRowMapper;
     private final MpaRowMapper mpaRowMapper;
-    private final EventStorage eventStorage;
 
-    public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper,
-                         GenreRowMapper genreRowMapper, DirectorRowMapper directorRowMapper, MpaRowMapper mpaRowMapper,
-                         @Qualifier("EventDao") final EventStorage eventStorage) {
+    public FilmDbStorage(DataSource dataSource, FilmRowMapper filmRowMapper, GenreRowMapper genreRowMapper,
+                         DirectorRowMapper directorRowMapper, MpaRowMapper mpaRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.filmRowMapper = filmRowMapper;
         this.genreRowMapper = genreRowMapper;
         this.directorRowMapper = directorRowMapper;
         this.mpaRowMapper = mpaRowMapper;
-        this.eventStorage = eventStorage;
     }
 
     @Override
@@ -207,7 +203,6 @@ public class FilmDbStorage implements FilmStorage {
     public Film addLike(Long filmId, Long userId) {
         String query = "MERGE INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(query, filmId, userId);
-        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.ADD);
 
         return findById(filmId).orElse(null);
     }
@@ -216,7 +211,6 @@ public class FilmDbStorage implements FilmStorage {
     public Film deleteLike(Long filmId, Long userId) {
         String query = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
         jdbc.update(query, filmId, userId);
-        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
 
         return findById(filmId).orElse(null);
     }
@@ -380,7 +374,8 @@ public class FilmDbStorage implements FilmStorage {
 
         return recommendedFilmIds
                 .stream()
-                .map(filmId -> findById(filmId).get())
+                .map(filmId -> findById(filmId)
+                        .orElseThrow(() -> new NotFoundException("Фильм с id - " + filmId + " не найден")))
                 .toList();
     }
 

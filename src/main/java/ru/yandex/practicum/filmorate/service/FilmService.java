@@ -12,10 +12,8 @@ import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.mapper.MpaMapper;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
@@ -32,14 +30,17 @@ public class FilmService {
     private final GenreService genreService;
     private final MpaService mpaService;
     private final DirectorService directorService;
+    private final EventStorage eventStorage;
 
     public FilmService(UserService userService, @Qualifier("FilmDao") final FilmStorage filmStorage,
-                       GenreService genreService, MpaService mpaService, DirectorService directorService) {
+                       @Qualifier("EventDao") final EventStorage eventStorage, GenreService genreService,
+                       MpaService mpaService, DirectorService directorService) {
         this.userService = userService;
         this.filmStorage = filmStorage;
         this.genreService = genreService;
         this.mpaService = mpaService;
         this.directorService = directorService;
+        this.eventStorage = eventStorage;
     }
 
     public FilmDto getFilmById(Long id) {
@@ -108,12 +109,20 @@ public class FilmService {
 
     public FilmDto addLike(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
-        return FilmMapper.mapFilmToFilmDto(filmStorage.addLike(filmId, userId));
+
+        Film addedLike = filmStorage.addLike(filmId, userId);
+        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.ADD);
+
+        return FilmMapper.mapFilmToFilmDto(addedLike);
     }
 
     public FilmDto deleteLike(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
-        return FilmMapper.mapFilmToFilmDto(filmStorage.deleteLike(filmId, userId));
+
+        Film removedLike = filmStorage.deleteLike(filmId, userId);
+        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
+
+        return FilmMapper.mapFilmToFilmDto(removedLike);
     }
 
     public List<FilmDto> getMostLikedFilms(int count) {

@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage.user;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.*;
-import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.mapper.UserRowMapper;
 
 import javax.sql.DataSource;
@@ -23,13 +21,10 @@ public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbc;
     private final UserRowMapper userRowMapper;
-    private final EventStorage eventStorage;
 
-    public UserDbStorage(DataSource dataSource, UserRowMapper userRowMapper,
-                         @Qualifier("EventDao") final EventStorage eventStorage) {
+    public UserDbStorage(DataSource dataSource, UserRowMapper userRowMapper) {
         this.jdbc = new JdbcTemplate(dataSource);
         this.userRowMapper = userRowMapper;
-        this.eventStorage = eventStorage;
     }
 
     @Override
@@ -136,8 +131,6 @@ public class UserDbStorage implements UserStorage {
             jdbc.update(query, userId, friendId);
         }
 
-        eventStorage.addEvent(userId, friendId, EventType.FRIEND, Operation.ADD);
-
         return findById(friendId).orElse(null);
     }
 
@@ -159,8 +152,6 @@ public class UserDbStorage implements UserStorage {
 
         String queryDelete = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
         jdbc.update(queryDelete, userId, friendId);
-
-        eventStorage.addEvent(userId, friendId, EventType.FRIEND, Operation.REMOVE);
 
         if (countReverseLink > 0) {
             String queryUpdate = "UPDATE friends SET is_confirmed = FALSE WHERE user_id = ? AND friend_id = ?";

@@ -1,5 +1,8 @@
 package ru.yandex.practicum.filmorate.handler;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,31 +13,28 @@ import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 
-import java.util.stream.Collectors;
-
 @RestControllerAdvice
 public class ErrorHandler {
 
-    @ExceptionHandler({ValidationException.class, MethodArgumentNotValidException.class})
+    @ExceptionHandler({ValidationException.class, MethodArgumentNotValidException.class,
+            ConstraintViolationException.class, ResponseStatusException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidationException(final Exception e) {
-        if (e instanceof ValidationException) {
-            return new ErrorResponse("Ошибка валидации данных", e.getMessage());
-        }
-
-        MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
-        String message = exception.getBindingResult().getFieldErrors()
-                .stream()
-                .map(error -> error.getField() + " - " + error.getDefaultMessage())
-                .collect(Collectors.joining("\n"));
+        String message = switch (e) {
+            case ValidationException err -> err.getMessage();
+            case MethodArgumentNotValidException err -> err.getBindingResult().getAllErrors().stream()
+                    .findFirst()
+                    .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                    .orElse("Ошибка валидации полей");
+            case ConstraintViolationException err -> err.getConstraintViolations().stream()
+                    .findFirst()
+                    .map(ConstraintViolation::getMessage)
+                    .orElse("Ошибка валидации параметров");
+            case ResponseStatusException err -> err.getReason();
+            default -> "Неверные данные запроса";
+        };
 
         return new ErrorResponse("Ошибка валидации данных", message);
-    }
-
-    @ExceptionHandler(ResponseStatusException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleResponseStatusException(ResponseStatusException e) {
-        return new ErrorResponse("Ошибка валидации", e.getReason());
     }
 
     @ExceptionHandler

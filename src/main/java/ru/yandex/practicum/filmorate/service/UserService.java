@@ -13,6 +13,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.EventMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.event.EventStorage;
@@ -75,6 +77,7 @@ public class UserService {
         }
 
         User friend = userStorage.addFriend(id, friendId);
+        eventStorage.addEvent(id, friendId, EventType.FRIEND, Operation.ADD);
         return UserMapper.mapUserToUserDto(friend);
     }
 
@@ -86,6 +89,7 @@ public class UserService {
         }
 
         User friend = userStorage.deleteFriend(id, friendId);
+        eventStorage.addEvent(id, friendId, EventType.FRIEND, Operation.REMOVE);
         return UserMapper.mapUserToUserDto(friend);
     }
 

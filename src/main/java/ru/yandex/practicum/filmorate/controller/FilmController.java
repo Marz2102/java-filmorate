@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.dto.film.FilmCreateDto;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
+@Validated
 @RequestMapping("/films")
 public class FilmController {
 
@@ -64,9 +67,9 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<FilmDto>> getMostLikedFilms(
-            @RequestParam(name = "count", required = false, defaultValue = "10") int count,
-            @RequestParam(name = "genreId", required = false) Long genreId,
-            @RequestParam(name = "year", required = false) Integer year) {
+            @Positive @RequestParam(name = "count", required = false, defaultValue = "10") int count,
+            @Positive @RequestParam(name = "genreId", required = false) Long genreId,
+            @Positive @RequestParam(name = "year", required = false) Integer year) {
         log.info("Вызван эндпоинт на получение списка самых популярных фильмов с фильтрацией по жанру и году");
         return ResponseEntity.ok(filmService.getMostLikedFilms(count, genreId, year));
     }

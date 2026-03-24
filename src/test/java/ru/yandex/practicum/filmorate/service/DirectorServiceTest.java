@@ -117,7 +117,7 @@ class DirectorServiceTest {
 
     @Test
     void deleteDirectorById_ShouldCallStorage() {
-        doNothing().when(directorStorage).deleteDirector(1L);
+        when(directorStorage.findById(1L)).thenReturn(Optional.of(new Director()));
 
         directorService.deleteDirectorById(1L);
 

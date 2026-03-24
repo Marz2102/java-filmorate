@@ -29,12 +29,12 @@ public class DirectorService {
     }
 
     public DirectorDto getDirectorById(Long id) {
-        return directorStorage.findById(id)
-                .map(DirectorMapper::mapDirectorToDirectorDto)
-                .orElseThrow(() -> new NotFoundException("Директор с id - " + id + " не найден"));
+        return DirectorMapper.mapDirectorToDirectorDto(getDirectorOrThrow(id));
     }
 
     public void deleteDirectorById(Long id) {
+        getDirectorOrThrow(id);
+
         directorStorage.deleteDirector(id);
     }
 
@@ -47,10 +47,15 @@ public class DirectorService {
     }
 
     public DirectorDto updateDirector(DirectorUpdateDto directorUpdateDto) {
-        Director updatedDirector = directorStorage.findById(directorUpdateDto.getId())
-                .map(director -> DirectorMapper.updateDirectorFields(directorUpdateDto, director))
-                .orElseThrow(() -> new NotFoundException("Директор с id - " + directorUpdateDto.getId() + " не найден"));
+        Director director = getDirectorOrThrow(directorUpdateDto.getId());
+
+        Director updatedDirector = DirectorMapper.updateDirectorFields(directorUpdateDto, director);
 
         return DirectorMapper.mapDirectorToDirectorDto(directorStorage.updateDirector(updatedDirector));
+    }
+
+    private Director getDirectorOrThrow(Long id) {
+        return directorStorage.findById(id)
+                .orElseThrow(() -> new NotFoundException("Директор с id - " + id + " не найден"));
     }
 }

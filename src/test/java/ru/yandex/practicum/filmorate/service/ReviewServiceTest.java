@@ -10,7 +10,11 @@ import ru.yandex.practicum.filmorate.dto.review.ReviewCreateDto;
 import ru.yandex.practicum.filmorate.dto.review.ReviewDto;
 import ru.yandex.practicum.filmorate.dto.review.ReviewUpdateDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.Operation;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.storage.event.EventStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
 import java.util.List;
@@ -29,6 +33,9 @@ class ReviewServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private EventStorage eventStorage;
 
     @Mock
     private FilmService filmService;
@@ -202,6 +209,12 @@ class ReviewServiceTest {
 
     @Test
     void deleteReviewById_ShouldCallStorage() {
+        Review existingReview = new Review();
+        existingReview.setReviewId(1L);
+        existingReview.setUserId(1L);
+        existingReview.setFilmId(1L);
+
+        when(reviewStorage.findById(1L)).thenReturn(Optional.of(existingReview));
         doNothing().when(reviewStorage).deleteReview(1L);
 
         reviewService.deleteReviewById(1L);
