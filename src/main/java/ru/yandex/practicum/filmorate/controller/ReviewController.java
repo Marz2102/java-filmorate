@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,8 +34,8 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<List<ReviewDto>> getAllReviews(
-            @RequestParam(name = "filmId", required = false) Long filmId,
-            @RequestParam(name = "count", required = false, defaultValue = "10") int count
+            @Positive(message = "Укажите положительный Id") @RequestParam(name = "filmId", required = false) Long filmId,
+            @Positive(message = "Укажите положительный параметр count") @RequestParam(name = "count", required = false, defaultValue = "10") int count
     ) {
         log.info("Вызван эндпоинт на получение всех отзывов");
         return ResponseEntity.ok(reviewService.getReviews(filmId, count));

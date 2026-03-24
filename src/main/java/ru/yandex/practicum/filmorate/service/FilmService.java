@@ -130,11 +130,6 @@ public class FilmService {
     }
 
     public List<FilmDto> getMostLikedFilms(int count, Long genreId, Integer year) {
-        if (count <= 0) {
-            log.info("Параметр count = {}", count);
-            throw new ValidationException("Укажите положительный параметр count");
-        }
-
         return filmStorage.getMostLikedFilms(count, genreId, year)
                 .stream()
                 .map(FilmMapper::mapFilmToFilmDto)

@@ -67,9 +67,9 @@ public class FilmController {
 
     @GetMapping("/popular")
     public ResponseEntity<List<FilmDto>> getMostLikedFilms(
-            @Positive @RequestParam(name = "count", required = false, defaultValue = "10") int count,
-            @Positive @RequestParam(name = "genreId", required = false) Long genreId,
-            @Positive @RequestParam(name = "year", required = false) Integer year) {
+            @Positive(message = "Укажите положительный параметр count") @RequestParam(name = "count", required = false, defaultValue = "10") int count,
+            @Positive(message = "Укажите положительный Id") @RequestParam(name = "genreId", required = false) Long genreId,
+            @Positive(message = "Укажите положительный год") @RequestParam(name = "year", required = false) Integer year) {
         log.info("Вызван эндпоинт на получение списка самых популярных фильмов с фильтрацией по жанру и году");
         return ResponseEntity.ok(filmService.getMostLikedFilms(count, genreId, year));
     }
