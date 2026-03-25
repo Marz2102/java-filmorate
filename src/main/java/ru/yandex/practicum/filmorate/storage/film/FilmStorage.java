@@ -15,18 +15,18 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-    Film addLike(Long filmId, Long userId);
+    Film addMark(Long filmId, Long userId, Integer mark);
 
-    Film deleteLike(Long filmId, Long userId);
+    Film deleteMark(Long filmId, Long userId);
 
-    List<Film> getMostLikedFilms(int count, Long genreId, Integer year);
+    List<Film> getMostRatedFilms(int count, Long genreId, Integer year);
 
-    default List<Film> getMostLikedFilms(int count) {
-        return getMostLikedFilms(count, null, null);
+    default List<Film> getMostRatedFilms(int count) {
+        return getMostRatedFilms(count, null, null);
     }
 
-    default List<Film> getMostLikedFilms(int count, Long genreId) {
-        return getMostLikedFilms(count, genreId, null);
+    default List<Film> getMostRatedFilms(int count, Long genreId) {
+        return getMostRatedFilms(count, genreId, null);
     }
 
     List<Film> getFilmsByDirectorId(Long directorId, String sortParam);

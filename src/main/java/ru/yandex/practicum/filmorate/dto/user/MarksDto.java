@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LikesDto {
+public class MarksDto {
     private Long id;
     private String email;
     private String login;
+    private Integer mark;
 }

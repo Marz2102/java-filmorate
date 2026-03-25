@@ -56,7 +56,7 @@ public final class FilmMapper {
             filmDto.setMpa(MpaMapper.mapMpaToMpaDto(film.getMpa()));
         }
 
-        filmDto.setLikes(new ArrayList<>(film.getLikes()));
+        filmDto.setMarks(new ArrayList<>(film.getMarks()));
 
         return filmDto;
     }

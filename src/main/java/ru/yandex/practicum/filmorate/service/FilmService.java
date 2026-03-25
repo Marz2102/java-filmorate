@@ -107,30 +107,30 @@ public class FilmService {
         return FilmMapper.mapFilmToFilmDto(filmStorage.updateFilm(updatedFilm));
     }
 
-    public FilmDto addLike(Long filmId, Long userId) {
+    public FilmDto addMark(Long filmId, Long userId, Integer mark) {
         checkToFindByIds(filmId, userId);
 
-        Film addedLike = filmStorage.addLike(filmId, userId);
+        Film addedMark = filmStorage.addMark(filmId, userId, mark);
         eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.ADD);
 
-        return FilmMapper.mapFilmToFilmDto(addedLike);
+        return FilmMapper.mapFilmToFilmDto(addedMark);
     }
 
-    public FilmDto deleteLike(Long filmId, Long userId) {
+    public FilmDto deleteMark(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
 
-        Film removedLike = filmStorage.deleteLike(filmId, userId);
+        Film removedMark = filmStorage.deleteMark(filmId, userId);
         eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
 
-        return FilmMapper.mapFilmToFilmDto(removedLike);
+        return FilmMapper.mapFilmToFilmDto(removedMark);
     }
 
-    public List<FilmDto> getMostLikedFilms(int count) {
-        return getMostLikedFilms(count, null, null);
+    public List<FilmDto> getMostRatedFilms(int count) {
+        return getMostRatedFilms(count, null, null);
     }
 
-    public List<FilmDto> getMostLikedFilms(int count, Long genreId, Integer year) {
-        return filmStorage.getMostLikedFilms(count, genreId, year)
+    public List<FilmDto> getMostRatedFilms(int count, Long genreId, Integer year) {
+        return filmStorage.getMostRatedFilms(count, genreId, year)
                 .stream()
                 .map(FilmMapper::mapFilmToFilmDto)
                 .collect(Collectors.toList());
