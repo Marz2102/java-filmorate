@@ -59,7 +59,6 @@ class FilmServiceTest {
         film.setDuration(148);
         film.setGenres(new HashSet<>());
         film.setDirectors(new HashSet<>());
-        film.setLikes(new HashSet<>());
 
         filmCreateDto = new FilmCreateDto(
                 "Inception",
@@ -254,30 +253,30 @@ class FilmServiceTest {
     void addLike_ShouldAddLike() {
         when(filmStorage.findById(1L)).thenReturn(Optional.of(film));
         when(userService.getUserById(1L)).thenReturn(null);
-        when(filmStorage.addLike(1L, 1L)).thenReturn(film);
+        when(filmStorage.addMark(1L, 1L, 10.0)).thenReturn(film);
 
-        FilmDto result = filmService.addLike(1L, 1L);
+        FilmDto result = filmService.addMark(1L, 1L, 10.0);
 
         assertThat(result).isNotNull();
 
         verify(filmStorage).findById(1L);
         verify(userService).getUserById(1L);
-        verify(filmStorage).addLike(1L, 1L);
+        verify(filmStorage).addMark(1L, 1L, 10.0);
     }
 
     @Test
     void deleteLike_ShouldDeleteLike() {
         when(filmStorage.findById(1L)).thenReturn(Optional.of(film));
         when(userService.getUserById(1L)).thenReturn(null);
-        when(filmStorage.deleteLike(1L, 1L)).thenReturn(film);
+        when(filmStorage.deleteMark(1L, 1L)).thenReturn(film);
 
-        FilmDto result = filmService.deleteLike(1L, 1L);
+        FilmDto result = filmService.deleteMark(1L, 1L);
 
         assertThat(result).isNotNull();
 
         verify(filmStorage).findById(1L);
         verify(userService).getUserById(1L);
-        verify(filmStorage).deleteLike(1L, 1L);
+        verify(filmStorage).deleteMark(1L, 1L);
     }
 
     @Test

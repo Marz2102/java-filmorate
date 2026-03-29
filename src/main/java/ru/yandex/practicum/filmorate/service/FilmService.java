@@ -107,7 +107,7 @@ public class FilmService {
         return FilmMapper.mapFilmToFilmDto(filmStorage.updateFilm(updatedFilm));
     }
 
-    public FilmDto addMark(Long filmId, Long userId, Integer mark) {
+    public FilmDto addMark(Long filmId, Long userId, Double mark) {
         checkToFindByIds(filmId, userId);
 
         Film addedMark = filmStorage.addMark(filmId, userId, mark);
@@ -116,22 +116,13 @@ public class FilmService {
         return FilmMapper.mapFilmToFilmDto(addedMark);
     }
 
-    public FilmDto addLike(Long filmId, Long userId) {
+    public FilmDto deleteMark(Long filmId, Long userId) {
         checkToFindByIds(filmId, userId);
 
-        Film addedLike = filmStorage.addLike(filmId, userId);
-        eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.ADD);
-
-        return FilmMapper.mapFilmToFilmDto(addedLike);
-    }
-
-    public FilmDto deleteLike(Long filmId, Long userId) {
-        checkToFindByIds(filmId, userId);
-
-        Film removedLike = filmStorage.deleteLike(filmId, userId);
+        Film removedMark = filmStorage.deleteMark(filmId, userId);
         eventStorage.addEvent(userId, filmId, EventType.LIKE, Operation.REMOVE);
 
-        return FilmMapper.mapFilmToFilmDto(removedLike);
+        return FilmMapper.mapFilmToFilmDto(removedMark);
     }
 
     public List<FilmDto> getMostRatedFilms(int count) {

@@ -4,7 +4,6 @@ drop table if exists reviews_reactions cascade;
 drop table if exists film_reviews cascade;
 drop table if exists film_genres cascade;
 drop table if exists marks cascade;
-drop table if exists likes cascade;
 drop table if exists friends cascade;
 drop table if exists film_directors cascade;
 drop table if exists directors cascade;
@@ -69,18 +68,9 @@ CREATE TABLE IF NOT EXISTS friends (
 CREATE TABLE IF NOT EXISTS marks (
     user_id BIGINT,
     film_id BIGINT,
-    mark INT CHECK (mark >= 1 AND mark <= 10),
+    mark NUMERIC CHECK (mark >= 1 AND mark <= 10),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, film_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS likes (
-    user_id BIGINT,
-    film_id BIGINT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, film_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE

@@ -50,7 +50,6 @@ class ModelTest {
         film.setDuration(148);
         film.setDirectors(new HashSet<>());
         film.setGenres(new HashSet<>());
-        film.setLikes(new HashSet<>());
 
         assertThat(film.getId()).isEqualTo(1L);
         assertThat(film.getName()).isEqualTo("Inception");
@@ -59,7 +58,6 @@ class ModelTest {
         assertThat(film.getDuration()).isEqualTo(148);
         assertThat(film.getDirectors()).isEmpty();
         assertThat(film.getGenres()).isEmpty();
-        assertThat(film.getLikes()).isEmpty();
     }
 
     @Test

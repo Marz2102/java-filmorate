@@ -15,11 +15,9 @@ public interface FilmStorage {
 
     Film updateFilm(Film film);
 
-    Film addMark(Long filmId, Long userId, Integer mark);
+    Film addMark(Long filmId, Long userId, Double mark);
 
-    Film addLike(Long filmId, Long userId);
-
-    Film deleteLike(Long filmId, Long userId);
+    Film deleteMark(Long filmId, Long userId);
 
     List<Film> getMostRatedFilms(int count, Long genreId, Integer year);
 

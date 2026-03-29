@@ -54,25 +54,22 @@ public class FilmController {
         return ResponseEntity.ok(filmService.updateFilm(film));
     }
 
-    @PutMapping("/{id}/like/{userId}/{mark}")
+    @PutMapping(value = {"/{id}/like/{userId}","/{id}/like/{userId}/{mark}"})
     public ResponseEntity<FilmDto> addMark(
             @PathVariable Long id,
             @PathVariable Long userId,
-            @PathVariable @Range(min = 1, max = 10, message = "Укажите оценку от 1 до 10 включительно") Integer mark) {
+            @PathVariable(required = false) @Range(min = 1, max = 10, message = "Укажите оценку от 1 до 10 включительно") Double mark) {
+        if (mark == null) {
+            mark = 10.0;
+        }
         log.info("Вызван эндпоинт на добавление оценки фильму");
         return ResponseEntity.ok(filmService.addMark(id, userId, mark));
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<FilmDto> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Вызван эндпоинт на добавление лайка");
-        return ResponseEntity.ok(filmService.addLike(id, userId));
-    }
-
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<FilmDto> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Вызван эндпоинт на удаление лайка и оценки фильма");
-        return ResponseEntity.ok(filmService.deleteLike(id, userId));
+    public ResponseEntity<FilmDto> deleteMark(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Вызван эндпоинт на удаление оценки фильма");
+        return ResponseEntity.ok(filmService.deleteMark(id, userId));
     }
 
     @GetMapping("/popular")

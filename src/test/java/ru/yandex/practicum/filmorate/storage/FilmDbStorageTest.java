@@ -141,21 +141,19 @@ class FilmDbStorageTest {
 
     @Test
     void addLike_ShouldAddToLikes() {
-        filmStorage.addLike(1L, 1L);
+        filmStorage.addMark(1L, 1L, 10.0);
 
         Optional<Film> film = filmStorage.findById(1L);
         assertThat(film).isPresent();
-        assertEquals(1, film.get().getLikes().size());
     }
 
     @Test
     void deleteLike_ShouldRemoveFromLikes() {
-        filmStorage.addLike(1L, 1L);
-        filmStorage.deleteLike(1L, 1L);
+        filmStorage.addMark(1L, 1L, 10.0);
+        filmStorage.deleteMark(1L, 1L);
 
         Optional<Film> film = filmStorage.findById(1L);
         assertThat(film).isPresent();
-        assertEquals(0, film.get().getLikes().size());
     }
 
     @Test
@@ -175,9 +173,9 @@ class FilmDbStorageTest {
         film2.setMpa(new Mpa(1L, "G"));
         filmStorage.addFilm(film2);
 
-        filmStorage.addMark(1L, 1L, 7);
-        filmStorage.addMark(2L, 1L, 6);
-        filmStorage.addMark(2L, user2.getId(), 10);
+        filmStorage.addMark(1L, 1L, 7.0);
+        filmStorage.addMark(2L, 1L, 6.0);
+        filmStorage.addMark(2L, user2.getId(), 10.0);
 
         List<Film> popular = filmStorage.getMostRatedFilms(10);
 
@@ -196,7 +194,7 @@ class FilmDbStorageTest {
         film2020.setMpa(new Mpa(1L, "G"));
         film2020 = filmStorage.addFilm(film2020);
 
-        filmStorage.addLike(film2020.getId(), testUser.getId());
+        filmStorage.addMark(film2020.getId(), testUser.getId(), 10.0);
 
         List<Film> films2020 = filmStorage.getMostRatedFilms(10, null, 2020);
         assertEquals(1, films2020.size());
@@ -214,7 +212,7 @@ class FilmDbStorageTest {
         drama.setGenres(new HashSet<>(Set.of(new Genre(2L, "Драма"))));
         drama = filmStorage.addFilm(drama);
 
-        filmStorage.addLike(drama.getId(), testUser.getId());
+        filmStorage.addMark(drama.getId(), testUser.getId(), 10.0);
 
         List<Film> comedyFilms = filmStorage.getMostRatedFilms(10, 1L, null);
         assertEquals(1, comedyFilms.size());
@@ -270,8 +268,8 @@ class FilmDbStorageTest {
         film2.setMpa(new Mpa(1L, "G"));
         filmStorage.addFilm(film2);
 
-        filmStorage.addLike(1L, testUser.getId());
-        filmStorage.addLike(1L, user2.getId());
+        filmStorage.addMark(1L, testUser.getId(), 10.0);
+        filmStorage.addMark(1L, user2.getId(), 10.0);
 
         List<Film> commonFilms = filmStorage.getCommonFilms(testUser.getId(), user2.getId());
         assertEquals(1, commonFilms.size());
@@ -363,7 +361,7 @@ class FilmDbStorageTest {
         film2020Comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         film2020Comedy = filmStorage.addFilm(film2020Comedy);
 
-        filmStorage.addLike(film2020Comedy.getId(), testUser.getId());
+        filmStorage.addMark(film2020Comedy.getId(), testUser.getId(), 10.0);
 
         List<Film> result = filmStorage.getMostRatedFilms(10, 1L, 2020);
 
@@ -383,7 +381,7 @@ class FilmDbStorageTest {
         comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         comedy = filmStorage.addFilm(comedy);
 
-        filmStorage.addLike(comedy.getId(), testUser.getId());
+        filmStorage.addMark(comedy.getId(), testUser.getId(), 10.0);
 
         List<Film> result = filmStorage.getMostRatedFilms(10, 1L, null);
 
@@ -409,7 +407,7 @@ class FilmDbStorageTest {
         film2021.setMpa(new Mpa(1L, "G"));
         film2021 = filmStorage.addFilm(film2021);
 
-        filmStorage.addLike(film2020.getId(), testUser.getId());
+        filmStorage.addMark(film2020.getId(), testUser.getId(), 10.0);
 
         List<Film> result = filmStorage.getMostRatedFilms(10, null, 2020);
 
@@ -554,7 +552,6 @@ class FilmDbStorageTest {
         List<Film> result = filmStorage.getMostRatedFilms(10, null, 2023);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getLikes()).isEmpty();
     }
 
     @Test

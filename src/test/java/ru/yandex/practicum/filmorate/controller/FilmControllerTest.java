@@ -227,22 +227,22 @@ class FilmControllerTest {
 
     @Test
     void addLike_ShouldReturnOk() throws Exception {
-        when(filmService.addLike(1L, 1L)).thenReturn(filmDto);
+        when(filmService.addMark(1L, 1L, 10.0)).thenReturn(filmDto);
 
         mockMvc.perform(put("/films/1/like/1"))
                 .andExpect(status().isOk());
 
-        verify(filmService).addLike(1L, 1L);
+        verify(filmService).addMark(1L, 1L, 10.0);
     }
 
     @Test
     void deleteLike_ShouldReturnOk() throws Exception {
-        when(filmService.deleteLike(1L, 1L)).thenReturn(filmDto);
+        when(filmService.deleteMark(1L, 1L)).thenReturn(filmDto);
 
         mockMvc.perform(delete("/films/1/like/1"))
                 .andExpect(status().isOk());
 
-        verify(filmService).deleteLike(1L, 1L);
+        verify(filmService).deleteMark(1L, 1L);
     }
 
     @Test

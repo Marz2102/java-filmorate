@@ -148,9 +148,9 @@ class DirectorDbStorageTest {
         u2.setBirthday(LocalDate.of(2000, 1, 1));
         u2 = userStorage.addUser(u2);
 
-        filmStorage.addMark(film1.getId(), u1.getId(), 5);
-        filmStorage.addMark(film2.getId(), u1.getId(), 4);
-        filmStorage.addMark(film2.getId(), u2.getId(), 8);
+        filmStorage.addMark(film1.getId(), u1.getId(), 5.0);
+        filmStorage.addMark(film2.getId(), u1.getId(), 4.0);
+        filmStorage.addMark(film2.getId(), u2.getId(), 8.0);
 
         List<Film> films = filmStorage.getFilmsByDirectorId(director.getId(), "rate");
 
