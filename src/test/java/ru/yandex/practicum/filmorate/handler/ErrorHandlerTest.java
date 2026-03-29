@@ -39,7 +39,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleValidationException_ShouldReturn400() throws Exception {
-        when(filmService.getMostLikedFilms(-1, null, null))
+        when(filmService.getMostRatedFilms(-1, null, null))
                 .thenThrow(new ValidationException("Укажите положительный параметр count"));
 
         mockMvc.perform(get("/films/popular?count=-1"))

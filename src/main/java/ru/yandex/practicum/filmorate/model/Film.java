@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.yandex.practicum.filmorate.dto.user.MarksDto;
+import ru.yandex.practicum.filmorate.dto.user.LikesDto;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -21,7 +21,8 @@ public class Film {
     private Integer duration;
     private Set<Director> directors = new HashSet<>();
     private Set<Genre> genres = new HashSet<>();
-    private Set<MarksDto> marks = new HashSet<>();
+    private Set<LikesDto> likes = new HashSet<>();
+    private Double rate;
     private Mpa mpa;
 
     @Override

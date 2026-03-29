@@ -7,7 +7,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.dto.user.MarksDto;
+import ru.yandex.practicum.filmorate.dto.user.LikesDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.storage.mapper.DirectorRowMapper;
@@ -54,7 +54,8 @@ public class FilmDbStorage implements FilmStorage {
 
             if (film != null) {
                 film.setGenres(getGenresForFilmId(id));
-                film.setMarks(getMarksForFilmId(id));
+                film.setLikes(getLikesForFilmId(id));
+                film.setRate(getRateForFilmId(id));
                 film.setDirectors(getDirectorsForFilmId(id));
             }
 
@@ -75,7 +76,7 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbc.query(query, filmRowMapper);
 
-        setAllGenresDirectorsAndMarks(films);
+        setAllGenresDirectorsMarksAndLikes(films);
 
         return films;
     }
@@ -193,7 +194,8 @@ public class FilmDbStorage implements FilmStorage {
 
         film.setDirectors(getDirectorsForFilmId(film.getId()));
         film.setGenres(getGenresForFilmId(film.getId()));
-        film.setMarks(getMarksForFilmId(film.getId()));
+        film.setLikes(getLikesForFilmId(film.getId()));
+        film.setRate(getRateForFilmId(film.getId()));
         film.setMpa(getMpaForFilmId(film.getId()).orElse(null));
 
         return film;
@@ -208,9 +210,20 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     @Override
-    public Film deleteMark(Long filmId, Long userId) {
-        String query = "DELETE FROM marks WHERE film_id = ? AND user_id = ?";
+    public Film addLike(Long filmId, Long userId) {
+        String query = "MERGE INTO likes (film_id, user_id) VALUES (?, ?)";
         jdbc.update(query, filmId, userId);
+
+        return findById(filmId).orElse(null);
+    }
+
+    @Override
+    public Film deleteLike(Long filmId, Long userId) {
+        String queryLike = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+        jdbc.update(queryLike, filmId, userId);
+
+        String queryMark = "DELETE FROM marks WHERE film_id = ? AND user_id = ?";
+        jdbc.update(queryMark, filmId, userId);
 
         return findById(filmId).orElse(null);
     }
@@ -248,7 +261,7 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
 
-        setAllGenresDirectorsAndMarks(films);
+        setAllGenresDirectorsMarksAndLikes(films);
 
         return films;
     }
@@ -296,7 +309,7 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbc.query(query, filmRowMapper, directorId);
 
-        setAllGenresDirectorsAndMarks(films);
+        setAllGenresDirectorsMarksAndLikes(films);
 
         return films;
     }
@@ -316,18 +329,18 @@ public class FilmDbStorage implements FilmStorage {
         String query = """
                SELECT f.id, f.name, f.description, f.release_date, f.duration, r.id as mpa_id, r.name as mpa_name
                FROM films as f
-               INNER JOIN marks as l1 ON l1.film_id = f.id AND l1.user_id = ?
-               INNER JOIN marks as l2 ON l2.film_id = f.id AND l2.user_id = ?
-               INNER JOIN (SELECT film_id, AVG(mark) as average_mark
-                           FROM marks
+               INNER JOIN likes as l1 ON l1.film_id = f.id AND l1.user_id = ?
+               INNER JOIN likes as l2 ON l2.film_id = f.id AND l2.user_id = ?
+               INNER JOIN (SELECT film_id, count(*) as cnt_likes
+                           FROM likes
                            GROUP BY film_id) as t ON f.id = t.film_id
                LEFT JOIN ratings as r ON f.rating_id = r.id
-               ORDER BY t.average_mark DESC
+               ORDER BY t.cnt_likes DESC
                """;
 
         List<Film> films = jdbc.query(query, filmRowMapper, userId, friendId);
 
-        setAllGenresDirectorsAndMarks(films);
+        setAllGenresDirectorsMarksAndLikes(films);
 
         return films;
     }
@@ -418,20 +431,23 @@ public class FilmDbStorage implements FilmStorage {
 
         List<Film> films = jdbc.query(query.toString(), filmRowMapper, params.toArray());
 
-        setAllGenresDirectorsAndMarks(films);
+        setAllGenresDirectorsMarksAndLikes(films);
 
         return films;
     }
 
-    private void setAllGenresDirectorsAndMarks(List<Film> films) {
+    private void setAllGenresDirectorsMarksAndLikes(List<Film> films) {
         Map<Long, Set<Genre>> allGenres = getGenresForAllFilms();
         films.forEach(film -> film.setGenres(allGenres.getOrDefault(film.getId(), Collections.emptySet())));
 
         Map<Long, Set<Director>> allDirectors = getDirectorsForAllFilms();
         films.forEach(film -> film.setDirectors(allDirectors.getOrDefault(film.getId(), Collections.emptySet())));
 
-        Map<Long, Set<MarksDto>> allMarks = getMarksForAllFilms();
-        films.forEach(film -> film.setMarks(allMarks.getOrDefault(film.getId(), Collections.emptySet())));
+        Map<Long, Set<LikesDto>> allLikes = getLikesForAllFilms();
+        films.forEach(film -> film.setLikes(allLikes.getOrDefault(film.getId(), Collections.emptySet())));
+
+        Map<Long, Double> allRates = getRateForAllFilms();
+        films.forEach(film -> film.setRate(allRates.getOrDefault(film.getId(), 0.0)));
     }
 
     private Set<Genre> getGenresForFilmId(Long id) {
@@ -514,52 +530,81 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private Set<MarksDto> getMarksForFilmId(Long id) {
+    private Double getRateForFilmId(Long id) {
         String query = """
-                SELECT u.id, u.email, u.login
-                FROM users as u
-                INNER JOIN marks as m ON u.id = m.user_id
-                INNER JOIN films as f ON f.id = m.film_id AND f.id = ?
+                SELECT AVG(m.mark) as rate
+                FROM films as f
+                INNER JOIN marks as m ON f.id = m.film_id
+                WHERE f.id = ?
                 """;
 
-        Set<MarksDto> marks = new HashSet<>();
-
-        jdbc.query(query, (rs) -> {
-            MarksDto marksDto = new MarksDto();
-            marksDto.setId(rs.getLong("id"));
-            marksDto.setEmail(rs.getString("email"));
-            marksDto.setLogin(rs.getString("login"));
-            marksDto.setMark(rs.getInt("mark"));
-
-            marks.add(marksDto);
-        }, id);
-
-        return marks;
+        return jdbc.queryForObject(query, Double.class, id);
     }
 
-    private Map<Long, Set<MarksDto>> getMarksForAllFilms() {
+    private Map<Long, Double> getRateForAllFilms() {
         String query = """
-                SELECT f.id as film_id, u.id, u.email, u.login, m.mark
-                FROM users as u
-                INNER JOIN marks as m ON u.id = m.user_id
-                INNER JOIN films as f ON f.id = m.film_id
+                SELECT f.id as film_id, AVG(m.mark) as rate
+                FROM films as f
+                INNER JOIN marks as m ON f.id = m.film_id
+                GROUP BY f.id
                 """;
 
-        Map<Long, Set<MarksDto>> allMarks = new HashMap<>();
+        Map<Long, Double> allRates = new HashMap<>();
 
         jdbc.query(query, (rs) -> {
             Long filmId = rs.getLong("film_id");
-            Set<MarksDto> marks = allMarks.computeIfAbsent(filmId, k -> new HashSet<>());
+            Double mark = rs.getDouble("rate");
 
-            MarksDto marksDto = new MarksDto();
-            marksDto.setId(rs.getLong("id"));
-            marksDto.setEmail(rs.getString("email"));
-            marksDto.setLogin(rs.getString("login"));
-            marksDto.setMark(rs.getInt("mark"));
-
-            marks.add(marksDto);
+            allRates.put(filmId, mark);
         });
 
-        return allMarks;
+        return allRates;
+    }
+
+    private Set<LikesDto> getLikesForFilmId(Long id) {
+        String query = """
+                SELECT u.id, u.email, u.login
+                FROM users as u
+                INNER JOIN likes as l ON u.id = l.user_id
+                INNER JOIN films as f ON f.id = l.film_id AND f.id = ?
+                """;
+
+        Set<LikesDto> likes = new HashSet<>();
+
+        jdbc.query(query, (rs) -> {
+            LikesDto likesDto = new LikesDto();
+            likesDto.setId(rs.getLong("id"));
+            likesDto.setEmail(rs.getString("email"));
+            likesDto.setLogin(rs.getString("login"));
+
+            likes.add(likesDto);
+        }, id);
+
+        return likes;
+    }
+
+    private Map<Long, Set<LikesDto>> getLikesForAllFilms() {
+        String query = """
+                SELECT f.id as film_id, u.id, u.email, u.login, l.created_at
+                FROM users as u
+                INNER JOIN likes as l ON u.id = l.user_id
+                INNER JOIN films as f ON f.id = l.film_id
+                """;
+
+        Map<Long, Set<LikesDto>> allLikes = new HashMap<>();
+
+        jdbc.query(query, (rs) -> {
+            Long filmId = rs.getLong("film_id");
+            Set<LikesDto> likes = allLikes.computeIfAbsent(filmId, k -> new HashSet<>());
+
+            LikesDto likesDto = new LikesDto();
+            likesDto.setId(rs.getLong("id"));
+            likesDto.setEmail(rs.getString("email"));
+            likesDto.setLogin(rs.getString("login"));
+
+            likes.add(likesDto);
+        });
+
+        return allLikes;
     }
 }

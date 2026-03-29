@@ -113,8 +113,8 @@ class DirectorDbStorageTest {
     }
 
     @Test
-    void getFilmsByDirectorSortedByLikes_ShouldReturnFilmsSortedByLikes() {
-        Director director = directorStorage.addDirector(new Director(null, "Likes Director"));
+    void getFilmsByDirectorSortedByRates_ShouldReturnFilmsSortedByRates() {
+        Director director = directorStorage.addDirector(new Director(null, "Rate Director"));
 
         Film film1 = new Film();
         film1.setName("Film1");
@@ -148,11 +148,11 @@ class DirectorDbStorageTest {
         u2.setBirthday(LocalDate.of(2000, 1, 1));
         u2 = userStorage.addUser(u2);
 
-        filmStorage.addLike(film1.getId(), u1.getId());
-        filmStorage.addLike(film2.getId(), u1.getId());
-        filmStorage.addLike(film2.getId(), u2.getId());
+        filmStorage.addMark(film1.getId(), u1.getId(), 5);
+        filmStorage.addMark(film2.getId(), u1.getId(), 4);
+        filmStorage.addMark(film2.getId(), u2.getId(), 8);
 
-        List<Film> films = filmStorage.getFilmsByDirectorId(director.getId(), "likes");
+        List<Film> films = filmStorage.getFilmsByDirectorId(director.getId(), "rate");
 
         assertEquals(2, films.size());
         assertEquals(film2.getId(), films.get(0).getId());
