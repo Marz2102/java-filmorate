@@ -141,25 +141,23 @@ class FilmDbStorageTest {
 
     @Test
     void addLike_ShouldAddToLikes() {
-        filmStorage.addLike(1L, 1L);
+        filmStorage.addMark(1L, 1L, 10.0);
 
         Optional<Film> film = filmStorage.findById(1L);
         assertThat(film).isPresent();
-        assertEquals(1, film.get().getLikes().size());
     }
 
     @Test
     void deleteLike_ShouldRemoveFromLikes() {
-        filmStorage.addLike(1L, 1L);
-        filmStorage.deleteLike(1L, 1L);
+        filmStorage.addMark(1L, 1L, 10.0);
+        filmStorage.deleteMark(1L, 1L);
 
         Optional<Film> film = filmStorage.findById(1L);
         assertThat(film).isPresent();
-        assertEquals(0, film.get().getLikes().size());
     }
 
     @Test
-    void getMostLikedFilms_ShouldReturnSortedByLikes() {
+    void getMostRatesFilms_ShouldReturnSortedByMark() {
         User user2 = new User();
         user2.setEmail("user2@test.com");
         user2.setLogin("user2");
@@ -175,11 +173,11 @@ class FilmDbStorageTest {
         film2.setMpa(new Mpa(1L, "G"));
         filmStorage.addFilm(film2);
 
-        filmStorage.addLike(1L, 1L);
-        filmStorage.addLike(2L, 1L);
-        filmStorage.addLike(2L, user2.getId());
+        filmStorage.addMark(1L, 1L, 7.0);
+        filmStorage.addMark(2L, 1L, 6.0);
+        filmStorage.addMark(2L, user2.getId(), 10.0);
 
-        List<Film> popular = filmStorage.getMostLikedFilms(10);
+        List<Film> popular = filmStorage.getMostRatedFilms(10);
 
         assertEquals(2, popular.size());
         assertEquals(2L, popular.get(0).getId());
@@ -196,9 +194,9 @@ class FilmDbStorageTest {
         film2020.setMpa(new Mpa(1L, "G"));
         film2020 = filmStorage.addFilm(film2020);
 
-        filmStorage.addLike(film2020.getId(), testUser.getId());
+        filmStorage.addMark(film2020.getId(), testUser.getId(), 10.0);
 
-        List<Film> films2020 = filmStorage.getMostLikedFilms(10, null, 2020);
+        List<Film> films2020 = filmStorage.getMostRatedFilms(10, null, 2020);
         assertEquals(1, films2020.size());
         assertEquals("Film 2020", films2020.get(0).getName());
     }
@@ -214,13 +212,13 @@ class FilmDbStorageTest {
         drama.setGenres(new HashSet<>(Set.of(new Genre(2L, "Драма"))));
         drama = filmStorage.addFilm(drama);
 
-        filmStorage.addLike(drama.getId(), testUser.getId());
+        filmStorage.addMark(drama.getId(), testUser.getId(), 10.0);
 
-        List<Film> comedyFilms = filmStorage.getMostLikedFilms(10, 1L, null);
+        List<Film> comedyFilms = filmStorage.getMostRatedFilms(10, 1L, null);
         assertEquals(1, comedyFilms.size());
         assertEquals("TestFilm", comedyFilms.get(0).getName());
 
-        List<Film> dramaFilms = filmStorage.getMostLikedFilms(10, 2L, null);
+        List<Film> dramaFilms = filmStorage.getMostRatedFilms(10, 2L, null);
         assertEquals(1, dramaFilms.size());
         assertEquals("Drama Film", dramaFilms.get(0).getName());
     }
@@ -270,8 +268,8 @@ class FilmDbStorageTest {
         film2.setMpa(new Mpa(1L, "G"));
         filmStorage.addFilm(film2);
 
-        filmStorage.addLike(1L, testUser.getId());
-        filmStorage.addLike(1L, user2.getId());
+        filmStorage.addMark(1L, testUser.getId(), 10.0);
+        filmStorage.addMark(1L, user2.getId(), 10.0);
 
         List<Film> commonFilms = filmStorage.getCommonFilms(testUser.getId(), user2.getId());
         assertEquals(1, commonFilms.size());
@@ -363,9 +361,9 @@ class FilmDbStorageTest {
         film2020Comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         film2020Comedy = filmStorage.addFilm(film2020Comedy);
 
-        filmStorage.addLike(film2020Comedy.getId(), testUser.getId());
+        filmStorage.addMark(film2020Comedy.getId(), testUser.getId(), 10.0);
 
-        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, 2020);
+        List<Film> result = filmStorage.getMostRatedFilms(10, 1L, 2020);
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
@@ -383,9 +381,9 @@ class FilmDbStorageTest {
         comedy.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         comedy = filmStorage.addFilm(comedy);
 
-        filmStorage.addLike(comedy.getId(), testUser.getId());
+        filmStorage.addMark(comedy.getId(), testUser.getId(), 10.0);
 
-        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
+        List<Film> result = filmStorage.getMostRatedFilms(10, 1L, null);
 
         assertThat(result).hasSizeGreaterThanOrEqualTo(1);
         assertThat(result.stream().map(Film::getName)).contains("Comedy Film");
@@ -409,9 +407,9 @@ class FilmDbStorageTest {
         film2021.setMpa(new Mpa(1L, "G"));
         film2021 = filmStorage.addFilm(film2021);
 
-        filmStorage.addLike(film2020.getId(), testUser.getId());
+        filmStorage.addMark(film2020.getId(), testUser.getId(), 10.0);
 
-        List<Film> result = filmStorage.getMostLikedFilms(10, null, 2020);
+        List<Film> result = filmStorage.getMostRatedFilms(10, null, 2020);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Film 2020");
@@ -419,7 +417,7 @@ class FilmDbStorageTest {
 
     @Test
     void getMostLikedFilms_WithNoMatchingFilms_ShouldReturnEmpty() {
-        List<Film> result = filmStorage.getMostLikedFilms(10, null, 1800);
+        List<Film> result = filmStorage.getMostRatedFilms(10, null, 1800);
         assertThat(result).isEmpty();
     }
 
@@ -535,7 +533,7 @@ class FilmDbStorageTest {
         newFilm.setGenres(new HashSet<>(Set.of(new Genre(1L, "Комедия"))));
         newFilm = filmStorage.addFilm(newFilm);
 
-        List<Film> result = filmStorage.getMostLikedFilms(10, 1L, null);
+        List<Film> result = filmStorage.getMostRatedFilms(10, 1L, null);
 
         assertThat(result).isNotEmpty();
         assertThat(result.stream().anyMatch(f -> f.getName().equals("No Likes Film"))).isTrue();
@@ -551,10 +549,9 @@ class FilmDbStorageTest {
         newFilm.setMpa(new Mpa(1L, "G"));
         filmStorage.addFilm(newFilm);
 
-        List<Film> result = filmStorage.getMostLikedFilms(10, null, 2023);
+        List<Film> result = filmStorage.getMostRatedFilms(10, null, 2023);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getLikes()).isEmpty();
     }
 
     @Test

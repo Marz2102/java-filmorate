@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.Range;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -53,25 +54,31 @@ public class FilmController {
         return ResponseEntity.ok(filmService.updateFilm(film));
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public ResponseEntity<FilmDto> addLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Вызван эндпоинт на добавление лайка");
-        return ResponseEntity.ok(filmService.addLike(id, userId));
+    @PutMapping(value = {"/{id}/like/{userId}","/{id}/like/{userId}/{mark}"})
+    public ResponseEntity<FilmDto> addMark(
+            @PathVariable Long id,
+            @PathVariable Long userId,
+            @PathVariable(required = false) @Range(min = 1, max = 10, message = "Укажите оценку от 1 до 10 включительно") Double mark) {
+        if (mark == null) {
+            mark = 10.0;
+        }
+        log.info("Вызван эндпоинт на добавление оценки фильму");
+        return ResponseEntity.ok(filmService.addMark(id, userId, mark));
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public ResponseEntity<FilmDto> deleteLike(@PathVariable Long id, @PathVariable Long userId) {
-        log.info("Вызван эндпоинт на удаление лайка");
-        return ResponseEntity.ok(filmService.deleteLike(id, userId));
+    public ResponseEntity<FilmDto> deleteMark(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Вызван эндпоинт на удаление оценки фильма");
+        return ResponseEntity.ok(filmService.deleteMark(id, userId));
     }
 
     @GetMapping("/popular")
-    public ResponseEntity<List<FilmDto>> getMostLikedFilms(
+    public ResponseEntity<List<FilmDto>> getMostRatedFilms(
             @Positive(message = "Укажите положительный параметр count") @RequestParam(name = "count", required = false, defaultValue = "10") int count,
             @Positive(message = "Укажите положительный Id") @RequestParam(name = "genreId", required = false) Long genreId,
             @Positive(message = "Укажите положительный год") @RequestParam(name = "year", required = false) Integer year) {
         log.info("Вызван эндпоинт на получение списка самых популярных фильмов с фильтрацией по жанру и году");
-        return ResponseEntity.ok(filmService.getMostLikedFilms(count, genreId, year));
+        return ResponseEntity.ok(filmService.getMostRatedFilms(count, genreId, year));
     }
 
     @GetMapping("/director/{id}")
@@ -79,10 +86,10 @@ public class FilmController {
             @PathVariable Long id,
             @RequestParam(name = "sortBy") String sortBy
     ) {
-        if (!"likes".equals(sortBy) && !"year".equals(sortBy)) {
+        if (!"rate".equals(sortBy) && !"year".equals(sortBy)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Параметр sortBy должен быть 'likes' или 'year'"
+                    "Параметр sortBy должен быть 'rate' или 'year'"
             );
         }
 

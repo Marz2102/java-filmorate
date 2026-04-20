@@ -59,7 +59,6 @@ class FilmServiceTest {
         film.setDuration(148);
         film.setGenres(new HashSet<>());
         film.setDirectors(new HashSet<>());
-        film.setLikes(new HashSet<>());
 
         filmCreateDto = new FilmCreateDto(
                 "Inception",
@@ -254,52 +253,52 @@ class FilmServiceTest {
     void addLike_ShouldAddLike() {
         when(filmStorage.findById(1L)).thenReturn(Optional.of(film));
         when(userService.getUserById(1L)).thenReturn(null);
-        when(filmStorage.addLike(1L, 1L)).thenReturn(film);
+        when(filmStorage.addMark(1L, 1L, 10.0)).thenReturn(film);
 
-        FilmDto result = filmService.addLike(1L, 1L);
+        FilmDto result = filmService.addMark(1L, 1L, 10.0);
 
         assertThat(result).isNotNull();
 
         verify(filmStorage).findById(1L);
         verify(userService).getUserById(1L);
-        verify(filmStorage).addLike(1L, 1L);
+        verify(filmStorage).addMark(1L, 1L, 10.0);
     }
 
     @Test
     void deleteLike_ShouldDeleteLike() {
         when(filmStorage.findById(1L)).thenReturn(Optional.of(film));
         when(userService.getUserById(1L)).thenReturn(null);
-        when(filmStorage.deleteLike(1L, 1L)).thenReturn(film);
+        when(filmStorage.deleteMark(1L, 1L)).thenReturn(film);
 
-        FilmDto result = filmService.deleteLike(1L, 1L);
+        FilmDto result = filmService.deleteMark(1L, 1L);
 
         assertThat(result).isNotNull();
 
         verify(filmStorage).findById(1L);
         verify(userService).getUserById(1L);
-        verify(filmStorage).deleteLike(1L, 1L);
+        verify(filmStorage).deleteMark(1L, 1L);
     }
 
     @Test
     void getMostLikedFilms_WithCount_ShouldReturnList() {
-        when(filmStorage.getMostLikedFilms(5, null, null)).thenReturn(List.of(film));
+        when(filmStorage.getMostRatedFilms(5, null, null)).thenReturn(List.of(film));
 
-        List<FilmDto> result = filmService.getMostLikedFilms(5, null, null);
+        List<FilmDto> result = filmService.getMostRatedFilms(5, null, null);
 
         assertThat(result).hasSize(1);
 
-        verify(filmStorage).getMostLikedFilms(5, null, null);
+        verify(filmStorage).getMostRatedFilms(5, null, null);
     }
 
     @Test
     void getMostLikedFilms_WithGenreAndYear_ShouldReturnList() {
-        when(filmStorage.getMostLikedFilms(10, 1L, 2020)).thenReturn(List.of(film));
+        when(filmStorage.getMostRatedFilms(10, 1L, 2020)).thenReturn(List.of(film));
 
-        List<FilmDto> result = filmService.getMostLikedFilms(10, 1L, 2020);
+        List<FilmDto> result = filmService.getMostRatedFilms(10, 1L, 2020);
 
         assertThat(result).hasSize(1);
 
-        verify(filmStorage).getMostLikedFilms(10, 1L, 2020);
+        verify(filmStorage).getMostRatedFilms(10, 1L, 2020);
     }
 
     @Test

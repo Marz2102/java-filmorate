@@ -227,84 +227,84 @@ class FilmControllerTest {
 
     @Test
     void addLike_ShouldReturnOk() throws Exception {
-        when(filmService.addLike(1L, 1L)).thenReturn(filmDto);
+        when(filmService.addMark(1L, 1L, 10.0)).thenReturn(filmDto);
 
         mockMvc.perform(put("/films/1/like/1"))
                 .andExpect(status().isOk());
 
-        verify(filmService).addLike(1L, 1L);
+        verify(filmService).addMark(1L, 1L, 10.0);
     }
 
     @Test
     void deleteLike_ShouldReturnOk() throws Exception {
-        when(filmService.deleteLike(1L, 1L)).thenReturn(filmDto);
+        when(filmService.deleteMark(1L, 1L)).thenReturn(filmDto);
 
         mockMvc.perform(delete("/films/1/like/1"))
                 .andExpect(status().isOk());
 
-        verify(filmService).deleteLike(1L, 1L);
+        verify(filmService).deleteMark(1L, 1L);
     }
 
     @Test
     void getMostLikedFilms_WithDefaultParams_ShouldReturnList() throws Exception {
-        when(filmService.getMostLikedFilms(10, null, null)).thenReturn(List.of(filmDto));
+        when(filmService.getMostRatedFilms(10, null, null)).thenReturn(List.of(filmDto));
 
         mockMvc.perform(get("/films/popular"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(filmService).getMostLikedFilms(10, null, null);
+        verify(filmService).getMostRatedFilms(10, null, null);
     }
 
     @Test
     void getMostLikedFilms_WithCount_ShouldReturnList() throws Exception {
-        when(filmService.getMostLikedFilms(5, null, null)).thenReturn(List.of(filmDto));
+        when(filmService.getMostRatedFilms(5, null, null)).thenReturn(List.of(filmDto));
 
         mockMvc.perform(get("/films/popular?count=5"))
                 .andExpect(status().isOk());
 
-        verify(filmService).getMostLikedFilms(5, null, null);
+        verify(filmService).getMostRatedFilms(5, null, null);
     }
 
     @Test
     void getMostLikedFilms_WithGenreId_ShouldReturnList() throws Exception {
-        when(filmService.getMostLikedFilms(10, 1L, null)).thenReturn(List.of(filmDto));
+        when(filmService.getMostRatedFilms(10, 1L, null)).thenReturn(List.of(filmDto));
 
         mockMvc.perform(get("/films/popular?genreId=1"))
                 .andExpect(status().isOk());
 
-        verify(filmService).getMostLikedFilms(10, 1L, null);
+        verify(filmService).getMostRatedFilms(10, 1L, null);
     }
 
     @Test
     void getMostLikedFilms_WithYear_ShouldReturnList() throws Exception {
-        when(filmService.getMostLikedFilms(10, null, 2020)).thenReturn(List.of(filmDto));
+        when(filmService.getMostRatedFilms(10, null, 2020)).thenReturn(List.of(filmDto));
 
         mockMvc.perform(get("/films/popular?year=2020"))
                 .andExpect(status().isOk());
 
-        verify(filmService).getMostLikedFilms(10, null, 2020);
+        verify(filmService).getMostRatedFilms(10, null, 2020);
     }
 
     @Test
     void getMostLikedFilms_WithAllFilters_ShouldReturnList() throws Exception {
-        when(filmService.getMostLikedFilms(5, 1L, 2020)).thenReturn(List.of(filmDto));
+        when(filmService.getMostRatedFilms(5, 1L, 2020)).thenReturn(List.of(filmDto));
 
         mockMvc.perform(get("/films/popular?count=5&genreId=1&year=2020"))
                 .andExpect(status().isOk());
 
-        verify(filmService).getMostLikedFilms(5, 1L, 2020);
+        verify(filmService).getMostRatedFilms(5, 1L, 2020);
     }
 
     @Test
     void getAllFilmsByDirectorId_SortByLikes_ShouldReturnList() throws Exception {
-        when(filmService.getAllFilmsByDirectorId(1L, "likes")).thenReturn(List.of(filmDto));
+        when(filmService.getAllFilmsByDirectorId(1L, "rate")).thenReturn(List.of(filmDto));
 
-        mockMvc.perform(get("/films/director/1?sortBy=likes"))
+        mockMvc.perform(get("/films/director/1?sortBy=rate"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(filmService).getAllFilmsByDirectorId(1L, "likes");
+        verify(filmService).getAllFilmsByDirectorId(1L, "rate");
     }
 
     @Test

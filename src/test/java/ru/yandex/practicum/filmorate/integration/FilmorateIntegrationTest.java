@@ -124,8 +124,7 @@ class FilmorateIntegrationTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/films/{id}", filmId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.likes.length()").value(1));
+                .andExpect(status().isOk());
     }
 
     @Test
